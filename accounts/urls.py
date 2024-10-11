@@ -8,6 +8,7 @@ router = routers.DefaultRouter()
 router.register('signup', views.SignUpViewSet, basename='signup')
 router.register('login', views.LoginViewSet, basename='login')
 router.register('profile', views.ProfileViewSet, basename='profile')
+router.register('teacher' , views.TeacherViewList , basename='teacher')
 
 urlpatterns = router.urls
 

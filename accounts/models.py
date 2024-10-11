@@ -117,4 +117,6 @@ def add_user_teacher(sender, instance, created, **kwargs):
 class RateToTeacher(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_rate')
-    rate = models.PositiveIntegerField()
+    rate = models.PositiveIntegerField(default=1)
+
+

@@ -3,25 +3,31 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django_jalali.serializers.serializerfield import JDateField
 
-
 from .models import *
 
 
 class PoolsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pool
-        fields = ['id','name' , 'address','status' ,'gender']
+        fields = ['id', 'name', 'address', 'status', 'gender']
 
 
 class CoursesSerializer(serializers.ModelSerializer):
     pool = serializers.CharField(source='course_start.pool', read_only=True)
-    start = JDateField()
-    end = JDateField()
+    start = JDateField(
+        required=True,
+        format='%Y-%m-%d',  # فرمت تاریخ جلالی به شکل سال-ماه-روز
+        input_formats=['%Y-%m-%d'])
+    end = JDateField(
+        required=True,
+        format='%Y-%m-%d',  # فرمت تاریخ جلالی به شکل سال-ماه-روز
+        input_formats=['%Y-%m-%d']
+    )
+
     class Meta:
         model = Classes
-        fields = ['id','pool' ,'teacher' ,'start' ,'end' , 'start_clock' ,'end_clock' ,'price' , 'discount' , 'total_price']
-
-
+        fields = ['id', 'pool', 'teacher', 'start', 'end', 'start_clock', 'end_clock', 'price', 'discount',
+                  'total_price']
 
 
 class PaidSerializer(serializers.ModelSerializer):
@@ -29,4 +35,4 @@ class PaidSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Paid
-        fields = ['id' , 'price' , 'course' , 'user']
+        fields = ['id', 'price', 'course', 'user']

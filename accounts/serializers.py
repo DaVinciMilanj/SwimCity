@@ -6,11 +6,6 @@ from django_jalali.serializers.serializerfield import JDateField
 from .models import *
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'first_name', 'last_name', 'username', 'phone', 'gender', 'code_meli', 'birthday', 'status']
-
 
 class SignUpSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
@@ -68,3 +63,15 @@ class ProfileCompleteSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['first_name', 'last_name', 'email', 'code_meli', 'birthday', 'gender']
+
+
+class TeacherListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Teacher
+        fields = ['id','first_name', 'last_name', 'phone' , 'average']
+
+
+class RateToTeacherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RateToTeacher
+        fields = ['id','rate','user','teacher']

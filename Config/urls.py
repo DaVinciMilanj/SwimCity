@@ -16,10 +16,29 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Your API Title",  # عنوان API خود را اینجا بنویسید
+      default_version='v1',  # ورژن API که معمولاً 'v1' است
+      description="SwimCity API",  # توضیح کوتاهی از API بنویسید
+      terms_of_service="https://www.google.com/policies/terms/",  # لینک به قوانین و مقررات
+      contact=openapi.Contact(email="radinmilani2005@gmail.com"),  # ایمیل تماس
+      license=openapi.License(name="BSD License"),  # لایسنس API، مثل BSD یا MIT
+   ),
+   public=True,  # نمایش عمومی API
+   permission_classes=(permissions.AllowAny,),  # همه کاربران به API دسترسی دارند
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('pools/' , include('pool.urls' , namespace='pools')),
     path("__debug__/", include("debug_toolbar.urls")),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
 ]

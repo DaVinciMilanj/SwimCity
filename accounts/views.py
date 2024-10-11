@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.permissions import *
@@ -67,3 +68,35 @@ class ProfileViewSet(ModelViewSet):
     def perform_update(self, serializer):
 
         serializer.save(user=self.request.user)
+
+
+
+
+class TeacherViewList(ModelViewSet):
+    serializer_class = TeacherListSerializer
+    permission_classes = [AllowAny]
+    queryset = Teacher.objects.all()
+
+    @action(detail=True, methods=['post'], url_path='rate')
+    def rate_teacher(self, request, pk=None):
+        teacher = self.get_object()
+        user_id = request.data.get('user_id')
+        rate = request.data.get('rate')
+
+        if not user_id or not rate:
+            return Response({"detail": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = CustomUser.objects.get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the user already rated this teacher
+        rate_obj, created = RateToTeacher.objects.update_or_create(
+            user=user,
+            teacher=teacher,
+            defaults={'rate': rate}
+        )
+
+        serializer = RateToTeacherSerializer(rate_obj)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
