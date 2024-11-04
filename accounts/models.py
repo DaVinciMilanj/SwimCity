@@ -75,6 +75,16 @@ class TeacherSignUpForm(models.Model):
     accepted = models.BooleanField(default=False)
 
 
+
+@receiver(post_save, sender=TeacherSignUpForm)
+def change_user_status_to_teacher(sender, instance, **kwargs):
+    if instance.accepted:
+        user = instance.user
+        if user.status != CustomUser.STATUS_CUSTOMUSER_TEACHER:
+            user.status = CustomUser.STATUS_CUSTOMUSER_TEACHER
+            user.save()
+
+
 class Teacher(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)

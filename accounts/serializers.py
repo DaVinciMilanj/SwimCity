@@ -7,6 +7,12 @@ from .models import *
 
 
 
+class TeacherSignUpFormSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeacherSignUpForm
+        fields = '__all__'
+
+
 class SignUpSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         required=True,
@@ -52,7 +58,6 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 
-
 class ProfileCompleteSerializer(serializers.ModelSerializer):
     birthday = JDateField(
         required=True,
@@ -62,16 +67,19 @@ class ProfileCompleteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name', 'email', 'code_meli', 'birthday', 'gender']
+        fields = [ 'username' ,'phone' ,'code_meli' , 'first_name', 'last_name', 'email', 'birthday', 'gender' ]
+
+
+
 
 
 class TeacherListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
-        fields = ['id','first_name', 'last_name', 'phone' , 'average']
+        fields = ['id', 'first_name', 'last_name', 'phone', 'average']
 
 
 class RateToTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = RateToTeacher
-        fields = ['id','rate','user','teacher']
+        fields = ['id', 'rate', 'user', 'teacher']

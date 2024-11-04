@@ -22,8 +22,6 @@ class PoolViewSet(ModelViewSet):
 
 
 
-class CoursePagination(PageNumberPagination):
-    page_size = 10  # تعداد رکورد در هر صفحه
 
 
 
@@ -31,17 +29,14 @@ class CoursePagination(PageNumberPagination):
 class CourseViewSet(ModelViewSet):
     serializer_class = CoursesSerializer
     permission_classes = [AllowAny]
-    pagination_class = CoursePagination
+
 
     def get_queryset(self):
         pools_pk = self.kwargs['pools_pk']
-
-        # انتخاب مستقیم کلاس‌ها و استخرهای مرتبط
         queryset = Classes.objects.select_related('course_start', 'teacher').filter(
             active=True,
             course_start__pool=pools_pk
         )
-
         return queryset
 class PaidViewSet(ModelViewSet):
     serializer_class = PaidSerializer

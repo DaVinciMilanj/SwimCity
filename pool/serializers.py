@@ -2,8 +2,10 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django_jalali.serializers.serializerfield import JDateField
+from accounts.serializers import *
 
 from .models import *
+
 
 
 class PoolsSerializer(serializers.ModelSerializer):
@@ -23,6 +25,7 @@ class CoursesSerializer(serializers.ModelSerializer):
         format='%Y-%m-%d',  # فرمت تاریخ جلالی به شکل سال-ماه-روز
         input_formats=['%Y-%m-%d']
     )
+    teacher = serializers.CharField(source='teacher.last_name', read_only=True)
 
     class Meta:
         model = Classes

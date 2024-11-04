@@ -15,6 +15,28 @@ User = get_user_model()
 
 
 
+
+
+
+
+
+class TeacherSignUpViewSet(ModelViewSet):
+
+    serializer_class = TeacherSignUpFormSerializer
+    permission_classes = [IsSuperUser]
+    queryset = TeacherSignUpForm.objects.all()
+
+    @action(detail=True, methods=['post'])
+    def accept(self, request, pk=None):
+        signup_form = self.get_object()
+        signup_form.accepted = True
+        signup_form.save()
+        return Response({'status': 'teacher accepted'}, status=status.HTTP_200_OK)
+
+
+
+
+
 class SignUpViewSet(ModelViewSet):
     serializer_class = SignUpSerializer
     http_method_names = ['post']
@@ -23,10 +45,11 @@ class SignUpViewSet(ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(status=status.HTTP_201_CREATED)
-
-
+        user = serializer.save()  # کاربر جدید را ذخیره کنید
+        return Response({
+            "user": serializer.data,
+            "message": "Registration successful"
+        }, status=status.HTTP_201_CREATED)
 
 
 class LoginViewSet(ViewSet):
@@ -41,36 +64,49 @@ class LoginViewSet(ViewSet):
 
         try:
             if info.isdigit():
-                user = User.objects.get(phone=info)
+                user = CustomUser.objects.get(phone=info)
             else:
-                user = User.objects.get(username=info)
+                user = CustomUser.objects.get(username=info)
 
-        except User.DoesNotExist:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
 
         user = authenticate(request, username=user.username, password=password)
 
         if user is not None:
+            # Clear existing token
+            Token.objects.filter(user=user).delete()
+            # Generate a new token
             token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key}, status=status.HTTP_200_OK)
+            return Response({
+                'token': token.key,
+                'is_superuser': user.is_superuser,
+                'is_staff': user.is_staff
+            }, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class ProfileViewSet(ModelViewSet):
     serializer_class = ProfileCompleteSerializer
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['get' , 'put']
 
     def get_queryset(self):
-
         return CustomUser.objects.filter(id=self.request.user.id)
 
     def perform_update(self, serializer):
+        # به‌روزرسانی اطلاعات کاربر
+        serializer.save()
 
-        serializer.save(user=self.request.user)
-
-
-
+    # def update(self, request, *args, **kwargs):
+    #     partial = kwargs.pop('partial', False)
+    #     instance = self.get_object()
+    #     serializer = self.get_serializer(instance, data=request.data, partial=partial)
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_update(serializer)
+    #     return Response(serializer.data)
+    #
 
 class TeacherViewList(ModelViewSet):
     serializer_class = TeacherListSerializer

@@ -41,3 +41,10 @@ class TeacherAdminShow(admin.ModelAdmin):
 
 
 admin.site.register(Teacher, TeacherAdminShow)
+
+
+class AdminTeacherFormShow(admin.ModelAdmin):
+    list_display = ['user', 'phone_number']
+
+
+admin.site.register(TeacherSignUpForm, AdminTeacherFormShow)
