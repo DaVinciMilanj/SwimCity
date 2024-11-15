@@ -2,7 +2,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django_jalali.serializers.serializerfield import JDateField
-
+from jdatetime import date as jdate
 from .models import *
 
 
@@ -10,7 +10,7 @@ from .models import *
 class TeacherSignUpFormSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherSignUpForm
-        fields = '__all__'
+        fields = ['user' , 'l_name' , 'phone_number' , 'massage']
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -67,16 +67,14 @@ class ProfileCompleteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = [ 'username' ,'phone' ,'code_meli' , 'first_name', 'last_name', 'email', 'birthday', 'gender' ]
+        fields = ['id','username' ,'phone' ,'code_meli' , 'first_name', 'last_name', 'email', 'birthday', 'gender' ]
 
-
-
-
+    
 
 class TeacherListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
-        fields = ['id', 'first_name', 'last_name', 'phone', 'average']
+        fields = ['id','user' ,'first_name', 'last_name', 'phone', 'average']
 
 
 class RateToTeacherSerializer(serializers.ModelSerializer):

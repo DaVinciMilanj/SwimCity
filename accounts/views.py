@@ -90,7 +90,7 @@ class LoginViewSet(ViewSet):
 class ProfileViewSet(ModelViewSet):
     serializer_class = ProfileCompleteSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ['get' , 'put']
+
 
     def get_queryset(self):
         return CustomUser.objects.filter(id=self.request.user.id)
@@ -136,3 +136,18 @@ class TeacherViewList(ModelViewSet):
 
         serializer = RateToTeacherSerializer(rate_obj)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class TeacherSignUpViewSet(ModelViewSet):
+    serializer_class = TeacherSignUpFormSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data = request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+

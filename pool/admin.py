@@ -6,7 +6,7 @@ from .models import *
 
 
 class PoolAdmin(admin.ModelAdmin):
-    fields = ['name', 'address', 'status', 'active', 'gender']
+    fields = ['name', 'address', 'status', 'active', 'gender' , 'image']
     list_display = ['name', 'active', 'status', 'gender']
 
 

@@ -11,7 +11,7 @@ from .models import *
 class PoolsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pool
-        fields = ['id', 'name', 'address', 'status', 'gender']
+        fields = ['id', 'name', 'address', 'status', 'gender' , 'image']
 
 
 class CoursesSerializer(serializers.ModelSerializer):

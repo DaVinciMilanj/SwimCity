@@ -28,7 +28,7 @@ class Pool(models.Model):
         (STATUS_CUSTOMUSER_MALE, 'پسر')
     )
     gender = models.CharField(choices=GENDER, max_length=10, null=True, blank=True)
-
+    image = models.ImageField(upload_to='pool_images/', null=True, blank=True)
     name = models.CharField(max_length=50)
     active = models.BooleanField(default=True)
     address = models.TextField()
