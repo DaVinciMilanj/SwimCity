@@ -1,7 +1,6 @@
 from django.urls import path
 from . import views
 from rest_framework_nested import routers
-from rest_framework.authtoken.views import obtain_auth_token
 
 router = routers.DefaultRouter()
 
@@ -10,6 +9,7 @@ router.register('login', views.LoginViewSet, basename='login')
 router.register('profile', views.ProfileViewSet, basename='profile')
 router.register('formteacher', views.TeacherSignUpViewSet, basename='formteacher')
 router.register('teacher', views.TeacherViewList, basename='teacher')
+router.register('forgot-password', views.ForgotPasswordViewSet, basename='forgot-password')
 
 urlpatterns = router.urls
 

@@ -41,16 +41,13 @@ INSTALLED_APPS = [
     'rest_framework',
     "debug_toolbar",
     'rest_framework.authtoken',
-
     'accounts.apps.AccountsConfig',
     'pool.apps.PoolConfig',
 
 ]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # 'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -69,14 +66,11 @@ MIDDLEWARE = [
 
 ]
 
-
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200"
 ]
-
-
 
 # CORS_ALLOW_METHODS = [
 #     'GET',
@@ -96,8 +90,6 @@ ROOT_URLCONF = 'Config.urls'
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-
 
 TEMPLATES = [
     {
@@ -166,6 +158,7 @@ USE_I18N = True
 
 USE_TZ = True
 
+KAVENEGAR_API_KEY = '6E7249797059454F68316735704A66484D6C514451546A7657476246434E654C6450342B6A385434454B773D'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
@@ -175,4 +168,4 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-DEBUG = True
+

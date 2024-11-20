@@ -1,40 +1,21 @@
+import random
 from django.shortcuts import render
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.permissions import *
 from rest_framework import status
+
+from Config import settings
 from .serializers import *
 from .permissions import *
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model, authenticate
+from kavenegar import *
 
 # Create your views here.
 
 User = get_user_model()
-
-
-
-
-
-
-
-
-class TeacherSignUpViewSet(ModelViewSet):
-
-    serializer_class = TeacherSignUpFormSerializer
-    permission_classes = [IsSuperUser]
-    queryset = TeacherSignUpForm.objects.all()
-
-    @action(detail=True, methods=['post'])
-    def accept(self, request, pk=None):
-        signup_form = self.get_object()
-        signup_form.accepted = True
-        signup_form.save()
-        return Response({'status': 'teacher accepted'}, status=status.HTTP_200_OK)
-
-
-
 
 
 class SignUpViewSet(ModelViewSet):
@@ -91,7 +72,6 @@ class ProfileViewSet(ModelViewSet):
     serializer_class = ProfileCompleteSerializer
     permission_classes = [IsAuthenticated]
 
-
     def get_queryset(self):
         return CustomUser.objects.filter(id=self.request.user.id)
 
@@ -99,14 +79,7 @@ class ProfileViewSet(ModelViewSet):
         # به‌روزرسانی اطلاعات کاربر
         serializer.save()
 
-    # def update(self, request, *args, **kwargs):
-    #     partial = kwargs.pop('partial', False)
-    #     instance = self.get_object()
-    #     serializer = self.get_serializer(instance, data=request.data, partial=partial)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_update(serializer)
-    #     return Response(serializer.data)
-    #
+
 
 class TeacherViewList(ModelViewSet):
     serializer_class = TeacherListSerializer
@@ -143,11 +116,39 @@ class TeacherSignUpViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data = request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 
+class ForgotPasswordViewSet(ViewSet):
+    @action(detail=False, methods=['post'], url_path='send-recovery-code')
+    def send_recovery_code(self, request):
+        phone = request.data.get('phone')
 
+        # بررسی وجود کاربر
+        try:
+            user = User.objects.get(phone=phone)
+        except User.DoesNotExist:
+            return Response({'error': 'User with this phone number does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # تولید کد بازیابی
+        recovery_code = random.randint(100000, 999999)
+        user.recovery_code = recovery_code  # ذخیره در فیلد مرتبط
+        user.save()
+
+        # ارسال پیامک
+        try:
+            api = KavenegarAPI(settings.KAVENEGAR_API_KEY)
+            params = {
+                'sender': '2000660110',
+                'receptor': phone,
+                'message': f'کد بازیابی شما: {recovery_code}',
+            }
+            api.sms_send(params)
+        except (APIException, HTTPException) as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({'message': 'Recovery code sent successfully.'}, status=status.HTTP_200_OK)

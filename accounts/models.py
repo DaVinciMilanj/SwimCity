@@ -59,6 +59,7 @@ class CustomUser(AbstractUser):
     gender = models.CharField(choices=GENDER, max_length=10, blank=True, null=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    recovery_code = models.CharField(max_length=6, blank=True, null=True)
 
     objects = CustomUserManager()
 
