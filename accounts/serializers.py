@@ -6,11 +6,10 @@ from jdatetime import date as jdate
 from .models import *
 
 
-
 class TeacherSignUpFormSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherSignUpForm
-        fields = ['user' , 'l_name' , 'phone_number' , 'massage']
+        fields = ['user', 'l_name', 'phone_number', 'massage']
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -67,14 +66,14 @@ class ProfileCompleteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id','username' ,'phone' ,'code_meli' , 'first_name', 'last_name', 'email', 'birthday', 'gender' ]
+        fields = ['id', 'username', 'phone', 'code_meli', 'first_name', 'last_name', 'email', 'birthday', 'gender',
+                  'image']
 
-    
 
 class TeacherListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
-        fields = ['id','user' ,'first_name', 'last_name', 'phone', 'average']
+        fields = ['id', 'first_name', 'last_name', 'phone', 'average', 'image']
 
 
 class RateToTeacherSerializer(serializers.ModelSerializer):

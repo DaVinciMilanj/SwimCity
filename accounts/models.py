@@ -60,6 +60,7 @@ class CustomUser(AbstractUser):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     recovery_code = models.CharField(max_length=6, blank=True, null=True)
+    image = models.ImageField(upload_to='profile' , null=True , blank=True)
 
     objects = CustomUserManager()
 
@@ -92,6 +93,7 @@ class Teacher(models.Model):
     code_meli = models.CharField(max_length=15)
     phone = models.CharField(max_length=15)
     birthday = jmodels.jDateField()
+
 
     def average(self):
         data = RateToTeacher.objects.filter(teacher=self).aggregate(avg=Avg('rate'))

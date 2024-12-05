@@ -1,7 +1,8 @@
 from django.urls import path
 from . import views
 from rest_framework_nested import routers
-from rest_framework.authtoken.views import obtain_auth_token
+from django.conf import settings
+from django.conf.urls.static import static
 
 router = routers.DefaultRouter()
 
@@ -19,6 +20,6 @@ course_routers.register('paid', views.PaidViewSet, basename='course-paid')
 urlpatterns = router.urls + pool_routers.urls + course_routers.urls
 
 
-
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 app_name = 'pools'

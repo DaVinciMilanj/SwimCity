@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.permissions import *
 from rest_framework import status
-
+from rest_framework.parsers import MultiPartParser, FormParser
 from Config import settings
 from .serializers import *
 from .permissions import *
@@ -71,6 +71,7 @@ class LoginViewSet(ViewSet):
 class ProfileViewSet(ModelViewSet):
     serializer_class = ProfileCompleteSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         return CustomUser.objects.filter(id=self.request.user.id)
@@ -82,7 +83,7 @@ class ProfileViewSet(ModelViewSet):
 
 
 class TeacherViewList(ModelViewSet):
-    serializer_class = TeacherListSerializer
+    serializer_class = RateToTeacherSerializer
     permission_classes = [AllowAny]
     queryset = Teacher.objects.all()
 

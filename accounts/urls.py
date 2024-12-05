@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 from rest_framework_nested import routers
+from django.conf import settings
+from django.conf.urls.static import static
 
 router = routers.DefaultRouter()
 
@@ -20,3 +22,4 @@ urlpatterns = router.urls
 
 
 app_name = 'accounts'
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
