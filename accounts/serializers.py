@@ -68,12 +68,13 @@ class ProfileCompleteSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id', 'username', 'phone', 'code_meli', 'first_name', 'last_name', 'email', 'birthday', 'gender',
                   'image']
+        read_only_fields = ['username']
 
 
 class TeacherListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
-        fields = ['id', 'first_name', 'last_name', 'phone', 'average', 'image']
+        fields = ['id','first_name', 'last_name', 'phone', 'average', 'image']
 
 
 class RateToTeacherSerializer(serializers.ModelSerializer):

@@ -83,33 +83,26 @@ class ProfileViewSet(ModelViewSet):
 
 
 class TeacherViewList(ModelViewSet):
-    serializer_class = RateToTeacherSerializer
+    serializer_class = TeacherListSerializer
     permission_classes = [AllowAny]
     queryset = Teacher.objects.all()
 
-    @action(detail=True, methods=['post'], url_path='rate')
+    # برای دریافت جزئیات معلم
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    # برای ثبت نمره به معلم
+    @action(detail=True, methods=['post'], url_path='rate', url_name='rate_teacher')
     def rate_teacher(self, request, pk=None):
         teacher = self.get_object()
-        user_id = request.data.get('user_id')
-        rate = request.data.get('rate')
+        serializer = RateToTeacherSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(teacher=teacher, user=request.user)
+            return Response({"message": "Rating submitted successfully"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if not user_id or not rate:
-            return Response({"detail": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            user = CustomUser.objects.get(id=user_id)
-        except CustomUser.DoesNotExist:
-            return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        # Check if the user already rated this teacher
-        rate_obj, created = RateToTeacher.objects.update_or_create(
-            user=user,
-            teacher=teacher,
-            defaults={'rate': rate}
-        )
-
-        serializer = RateToTeacherSerializer(rate_obj)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class TeacherSignUpViewSet(ModelViewSet):

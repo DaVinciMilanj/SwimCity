@@ -34,6 +34,7 @@ class CustomUserManager(BaseUserManager):
 
         return self.create_user(username, password, **extra_fields)
 
+
 class CustomUser(AbstractUser):
     STATUS_CUSTOMUSER_DEFAULT = 'default'
     STATUS_CUSTOMUSER_TEACHER = 'teacher'
@@ -60,10 +61,9 @@ class CustomUser(AbstractUser):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     recovery_code = models.CharField(max_length=6, blank=True, null=True)
-    image = models.ImageField(upload_to='profile' , null=True , blank=True)
+    image = models.ImageField(upload_to='profile', null=True, blank=True)
 
     objects = CustomUserManager()
-
 
     def __str__(self):
         return self.last_name
@@ -75,7 +75,6 @@ class TeacherSignUpForm(models.Model):
     phone_number = models.CharField(max_length=16)
     massage = models.TextField()
     accepted = models.BooleanField(default=False)
-
 
 
 @receiver(post_save, sender=TeacherSignUpForm)
@@ -93,7 +92,7 @@ class Teacher(models.Model):
     code_meli = models.CharField(max_length=15)
     phone = models.CharField(max_length=15)
     birthday = jmodels.jDateField()
-
+    image = models.ImageField(upload_to='teacher', blank=True)
 
     def average(self):
         data = RateToTeacher.objects.filter(teacher=self).aggregate(avg=Avg('rate'))
@@ -111,19 +110,35 @@ def get_previous_status(sender, instance, **kwargs):
     if instance.pk:
         previous_status = CustomUser.objects.get(pk=instance.pk).status
         user_previous_status[instance.pk] = previous_status
+        print(f"Previous status saved: {previous_status}")  # Debugging
 
 
 @receiver(post_save, sender=CustomUser)
-def add_user_teacher(sender, instance, created, **kwargs):
+def add_or_update_teacher(sender, instance, created, **kwargs):
+    print(f"Post-save signal triggered for user: {instance}")  # Debugging
+    if created and instance.status == CustomUser.STATUS_CUSTOMUSER_TEACHER:
+        print("Creating teacher record...")
+        Teacher.objects.create(
+            first_name=instance.first_name,
+            last_name=instance.last_name,
+            code_meli=instance.code_meli,
+            phone=instance.phone,
+            birthday=instance.birthday,
+            image=instance.image
+        )
     if not created:
         previous_status = user_previous_status.get(instance.pk)
-        if previous_status != instance.status and instance.status == CustomUser.STATUS_CUSTOMUSER_TEACHER:
-            Teacher.objects.create(
-                first_name=instance.first_name,
-                last_name=instance.last_name,
+        if instance.status == CustomUser.STATUS_CUSTOMUSER_TEACHER:
+            print("Updating teacher record...")
+            Teacher.objects.update_or_create(
                 code_meli=instance.code_meli,
-                phone=instance.phone,
-                birthday=instance.birthday
+                defaults={
+                    "first_name": instance.first_name,
+                    "last_name": instance.last_name,
+                    "phone": instance.phone,
+                    "birthday": instance.birthday,
+                    "image": instance.image
+                }
             )
 
 
@@ -131,5 +146,3 @@ class RateToTeacher(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_rate')
     rate = models.PositiveIntegerField(default=1)
-
-

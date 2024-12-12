@@ -13,7 +13,7 @@ router.register('formteacher', views.TeacherSignUpViewSet, basename='formteacher
 router.register('teacher', views.TeacherViewList, basename='teacher')
 router.register('forgot-password', views.ForgotPasswordViewSet, basename='forgot-password')
 
-urlpatterns = router.urls
+urlpatterns = router.urls + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # urlpatterns = [
 #     path('' , views.user_details , name='user_details')
@@ -22,4 +22,4 @@ urlpatterns = router.urls
 
 
 app_name = 'accounts'
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
