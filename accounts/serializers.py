@@ -80,4 +80,15 @@ class TeacherListSerializer(serializers.ModelSerializer):
 class RateToTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = RateToTeacher
-        fields = ['id', 'rate', 'user', 'teacher']
+        fields = ['id', 'rate', 'teacher']
+
+    def validate_rate(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("Rate must be between 1 and 5.")
+        return value
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['user'] = request.user
+        return super().create(validated_data)

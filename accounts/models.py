@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models.signals import post_save, pre_save
 from django.db.models import Avg
 from django.contrib.auth.models import BaseUserManager
@@ -93,6 +93,7 @@ class Teacher(models.Model):
     phone = models.CharField(max_length=15)
     birthday = jmodels.jDateField()
     image = models.ImageField(upload_to='teacher', blank=True)
+    active = models.BooleanField(default=True)
 
     def average(self):
         data = RateToTeacher.objects.filter(teacher=self).aggregate(avg=Avg('rate'))
@@ -145,4 +146,15 @@ def add_or_update_teacher(sender, instance, created, **kwargs):
 class RateToTeacher(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_rate')
-    rate = models.PositiveIntegerField(default=1)
+    rate = models.PositiveIntegerField(
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'teacher'], name='unique_rate_per_user_teacher')
+        ]
+
+    def __str__(self):
+        re

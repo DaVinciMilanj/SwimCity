@@ -85,7 +85,7 @@ class ProfileViewSet(ModelViewSet):
 class TeacherViewList(ModelViewSet):
     serializer_class = TeacherListSerializer
     permission_classes = [AllowAny]
-    queryset = Teacher.objects.all()
+    queryset = Teacher.objects.filter(active=True)
 
     # برای دریافت جزئیات معلم
     def retrieve(self, request, *args, **kwargs):
@@ -94,7 +94,7 @@ class TeacherViewList(ModelViewSet):
         return Response(serializer.data)
 
     # برای ثبت نمره به معلم
-    @action(detail=True, methods=['post'], url_path='rate', url_name='rate_teacher')
+    @action(detail=True, methods=['post'], url_path='rate', url_name='rate_teacher', permission_classes=[IsAuthenticated])
     def rate_teacher(self, request, pk=None):
         teacher = self.get_object()
         serializer = RateToTeacherSerializer(data=request.data)
