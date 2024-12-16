@@ -81,7 +81,6 @@ class ProfileViewSet(ModelViewSet):
         serializer.save()
 
 
-
 class TeacherViewList(ModelViewSet):
     serializer_class = TeacherListSerializer
     permission_classes = [AllowAny]
@@ -97,12 +96,30 @@ class TeacherViewList(ModelViewSet):
     @action(detail=True, methods=['post'], url_path='rate', url_name='rate_teacher', permission_classes=[IsAuthenticated])
     def rate_teacher(self, request, pk=None):
         teacher = self.get_object()
-        serializer = RateToTeacherSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(teacher=teacher, user=request.user)
-            return Response({"message": "Rating submitted successfully"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = request.user
+        rate = request.data.get('rate')
 
+        if not rate:
+            return Response({"error": "Rate is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Check if a rating already exists for this user and teacher
+            rating = RateToTeacher.objects.filter(teacher=teacher, user=user).first()
+            if rating:
+                # Update the existing rating
+                rating.rate = rate
+                rating.save()
+                message = "Rating updated successfully"
+            else:
+                # Create a new rating
+                RateToTeacher.objects.create(teacher=teacher, user=user, rate=rate)
+                message = "Rating submitted successfully"
+
+            # Return success response
+            return Response({"message": message}, status=status.HTTP_200_OK)
+
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TeacherSignUpViewSet(ModelViewSet):
@@ -114,7 +131,6 @@ class TeacherSignUpViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 
 class ForgotPasswordViewSet(ViewSet):

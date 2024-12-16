@@ -94,13 +94,10 @@ class Teacher(models.Model):
     birthday = jmodels.jDateField()
     image = models.ImageField(upload_to='teacher', blank=True)
     active = models.BooleanField(default=True)
+    average_rate = models.FloatField(default=0.0)  # New field
 
-    def average(self):
-        data = RateToTeacher.objects.filter(teacher=self).aggregate(avg=Avg('rate'))
-        star = 0
-        if data['avg'] is not None:
-            star = round(data['avg'], 1)
-        return star
+    def __str__(self):
+        return self.last_name
 
 
 user_previous_status = {}
@@ -156,5 +153,12 @@ class RateToTeacher(models.Model):
             models.UniqueConstraint(fields=['user', 'teacher'], name='unique_rate_per_user_teacher')
         ]
 
-    def __str__(self):
-        re
+
+@receiver(post_save, sender=RateToTeacher)
+def update_teacher_average(sender, instance, **kwargs):
+    teacher = instance.teacher
+    avg = RateToTeacher.objects.filter(teacher=teacher).aggregate(avg=Avg('rate'))['avg'] or 0.0
+    teacher.average_rate = round(avg, 1)
+    teacher.save()
+
+

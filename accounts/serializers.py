@@ -74,13 +74,17 @@ class ProfileCompleteSerializer(serializers.ModelSerializer):
 class TeacherListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
-        fields = ['id','first_name', 'last_name', 'phone', 'average', 'image']
+        fields = ['id', 'first_name', 'last_name', 'code_meli', 'phone', 'birthday', 'image', 'active', 'average_rate']
 
 
 class RateToTeacherSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RateToTeacher
-        fields = ['id', 'rate', 'teacher']
+        class Meta:
+            model = RateToTeacher
+            fields = ['rate']
+            extra_kwargs = {
+                'rate': {'required': True},
+            }
 
     def validate_rate(self, value):
         if value < 1 or value > 5:

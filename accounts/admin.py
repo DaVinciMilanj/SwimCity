@@ -38,6 +38,7 @@ admin.site.register(CustomUser, CustomUserAdmin)
 
 class TeacherAdminShow(admin.ModelAdmin):
     list_display = ['first_name', 'last_name', 'phone']
+    readonly_fields = ['average_rate']
 
 
 admin.site.register(Teacher, TeacherAdminShow)
@@ -47,4 +48,11 @@ class AdminTeacherFormShow(admin.ModelAdmin):
     list_display = ['user', 'phone_number']
 
 
+
 admin.site.register(TeacherSignUpForm, AdminTeacherFormShow)
+
+class TeacherRateUser(admin.ModelAdmin):
+    list_display = ['user' , 'teacher' , 'rate']
+
+
+admin.site.register(RateToTeacher , TeacherRateUser)

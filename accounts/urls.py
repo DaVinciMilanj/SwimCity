@@ -15,10 +15,6 @@ router.register('forgot-password', views.ForgotPasswordViewSet, basename='forgot
 
 urlpatterns = router.urls + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-# urlpatterns = [
-#     path('' , views.user_details , name='user_details')
-#
-# ]
 
 
 app_name = 'accounts'
