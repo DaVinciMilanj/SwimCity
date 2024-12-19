@@ -9,7 +9,7 @@ from .models import *
 class TeacherSignUpFormSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherSignUpForm
-        fields = ['user', 'l_name', 'phone_number', 'massage']
+        fields = ['l_name', 'phone_number', 'massage']
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -77,14 +77,19 @@ class TeacherListSerializer(serializers.ModelSerializer):
         fields = ['id', 'first_name', 'last_name', 'code_meli', 'phone', 'birthday', 'image', 'active', 'average_rate']
 
 
+class GetUserRateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RateToTeacher
+        fields = ['user', 'teacher', 'rate']
+
+
 class RateToTeacherSerializer(serializers.ModelSerializer):
     class Meta:
-        class Meta:
-            model = RateToTeacher
-            fields = ['rate']
-            extra_kwargs = {
-                'rate': {'required': True},
-            }
+        model = RateToTeacher
+        fields = ['rate']
+        extra_kwargs = {
+            'rate': {'required': True},
+        }
 
     def validate_rate(self, value):
         if value < 1 or value > 5:

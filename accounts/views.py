@@ -1,6 +1,7 @@
 import random
 from django.shortcuts import render
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.permissions import *
@@ -90,36 +91,47 @@ class TeacherViewList(ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        user_rating = None
 
-    # برای ثبت نمره به معلم
-    @action(detail=True, methods=['post'], url_path='rate', url_name='rate_teacher', permission_classes=[IsAuthenticated])
+        # بررسی کنید که کاربر وارد شده است
+        if request.user.is_authenticated:
+
+            rating = RateToTeacher.objects.filter(teacher=instance, user=request.user).first()
+            if rating:
+                user_rating = rating.rate  # مقدار رأی
+
+        # اضافه کردن رأی کاربر به داده‌های بازگشتی
+        data = serializer.data
+        data['user_rating'] = user_rating  # مقدار رأی یا None
+
+        return Response(data)
+
+    @action(detail=True, methods=['post'], url_path='rate', url_name='rate_teacher',
+            permission_classes=[IsAuthenticated])
     def rate_teacher(self, request, pk=None):
         teacher = self.get_object()
         user = request.user
-        rate = request.data.get('rate')
+        serializer = RateToTeacherSerializer(data=request.data, context={'request': request})
 
-        if not rate:
-            return Response({"error": "Rate is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if serializer.is_valid():
+            previous_rating = RateToTeacher.objects.filter(teacher=teacher, user=user).first()
+            previous_rate = previous_rating.rate if previous_rating else None
 
-        try:
-            # Check if a rating already exists for this user and teacher
-            rating = RateToTeacher.objects.filter(teacher=teacher, user=user).first()
-            if rating:
-                # Update the existing rating
-                rating.rate = rate
-                rating.save()
-                message = "Rating updated successfully"
-            else:
-                # Create a new rating
-                RateToTeacher.objects.create(teacher=teacher, user=user, rate=rate)
-                message = "Rating submitted successfully"
+            rate, created = RateToTeacher.objects.update_or_create(
+                teacher=teacher,
+                user=user,
+                defaults={'rate': serializer.validated_data['rate']}
+            )
 
-            # Return success response
-            return Response({"message": message}, status=status.HTTP_200_OK)
+            message = "Rating updated successfully" if not created else "Rating submitted successfully"
 
-        except ValidationError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "message": message,
+                "previous_rate": previous_rate,  # نمایش رأی قبلی
+                "new_rate": rate.rate  # نمایش رأی جدید
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TeacherSignUpViewSet(ModelViewSet):
