@@ -95,15 +95,16 @@ class TeacherViewList(ModelViewSet):
 
         # بررسی کنید که کاربر وارد شده است
         if request.user.is_authenticated:
-
             rating = RateToTeacher.objects.filter(teacher=instance, user=request.user).first()
+
             if rating:
-                user_rating = rating.rate  # مقدار رأی
+                user_rating = rating.rate  # مقدار رأی فعلی کاربر
+                print(f"Rating object: {rating}")
 
         # اضافه کردن رأی کاربر به داده‌های بازگشتی
         data = serializer.data
         data['user_rating'] = user_rating  # مقدار رأی یا None
-
+        print(user_rating)
         return Response(data)
 
     @action(detail=True, methods=['post'], url_path='rate', url_name='rate_teacher',
@@ -114,25 +115,16 @@ class TeacherViewList(ModelViewSet):
         serializer = RateToTeacherSerializer(data=request.data, context={'request': request})
 
         if serializer.is_valid():
-            previous_rating = RateToTeacher.objects.filter(teacher=teacher, user=user).first()
-            previous_rate = previous_rating.rate if previous_rating else None
-
-            rate, created = RateToTeacher.objects.update_or_create(
+            # ایجاد یا به‌روزرسانی رأی
+            RateToTeacher.objects.update_or_create(
                 teacher=teacher,
                 user=user,
                 defaults={'rate': serializer.validated_data['rate']}
             )
 
-            message = "Rating updated successfully" if not created else "Rating submitted successfully"
-
-            return Response({
-                "message": message,
-                "previous_rate": previous_rate,  # نمایش رأی قبلی
-                "new_rate": rate.rate  # نمایش رأی جدید
-            }, status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class TeacherSignUpViewSet(ModelViewSet):
     serializer_class = TeacherSignUpFormSerializer
