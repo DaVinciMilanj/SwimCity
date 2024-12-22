@@ -3,6 +3,8 @@ from django.shortcuts import render
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from  rest_framework.generics import CreateAPIView
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.permissions import *
 from rest_framework import status
@@ -126,16 +128,6 @@ class TeacherViewList(ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class TeacherSignUpViewSet(ModelViewSet):
-    serializer_class = TeacherSignUpFormSerializer
-    permission_classes = [IsAuthenticated]
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(user=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 class ForgotPasswordViewSet(ViewSet):
     @action(detail=False, methods=['post'], url_path='send-recovery-code')
@@ -166,3 +158,15 @@ class ForgotPasswordViewSet(ViewSet):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({'message': 'Recovery code sent successfully.'}, status=status.HTTP_200_OK)
+
+
+class TeacherSignUpViewSet(ModelViewSet):
+    serializer_class = TeacherSignUpFormSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+

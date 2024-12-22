@@ -6,12 +6,6 @@ from jdatetime import date as jdate
 from .models import *
 
 
-class TeacherSignUpFormSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TeacherSignUpForm
-        fields = ['l_name', 'phone_number', 'massage']
-
-
 class SignUpSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         required=True,
@@ -101,3 +95,11 @@ class RateToTeacherSerializer(serializers.ModelSerializer):
         if request and hasattr(request, 'user'):
             validated_data['user'] = request.user
         return super().create(validated_data)
+
+
+
+class TeacherSignUpFormSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeacherSignUpForm
+        fields = ['l_name', 'phone_number', 'massage']
+
