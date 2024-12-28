@@ -97,9 +97,7 @@ class RateToTeacherSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-
 class TeacherSignUpFormSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherSignUpForm
         fields = ['l_name', 'phone_number', 'massage']
-

@@ -138,6 +138,8 @@ class StartClass(models.Model):
         super().save(*args, **kwargs)
 
 
+
+
 def create_start_class(sender, instance, created, **kwargs):
     if created:
         start_class = StartClass(course=instance)

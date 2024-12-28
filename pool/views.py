@@ -21,15 +21,9 @@ class PoolViewSet(ModelViewSet):
         return Pool.objects.filter(active=True, status='education')
 
 
-
-
-
-
-
 class CourseViewSet(ModelViewSet):
     serializer_class = CoursesSerializer
     permission_classes = [AllowAny]
-
 
     def get_queryset(self):
         pools_pk = self.kwargs['pools_pk']
@@ -38,6 +32,8 @@ class CourseViewSet(ModelViewSet):
             course_start__pool=pools_pk
         )
         return queryset
+
+
 class PaidViewSet(ModelViewSet):
     serializer_class = PaidSerializer
     permission_classes = [IsAuthenticated]
@@ -46,32 +42,20 @@ class PaidViewSet(ModelViewSet):
         course_pk = self.kwargs['course_pk']
         return Paid.objects.filter(course__pk=course_pk, user=self.request.user)
 
-    class PaidViewSet(ModelViewSet):
-        serializer_class = PaidSerializer
-        permission_classes = [IsAuthenticated]
+    def create(self, request, *args, **kwargs):
+        course_pk = self.kwargs.get('course_pk')
+        course = Classes.objects.get(pk=course_pk)
 
-        def get_queryset(self):
-            course_pk = self.kwargs['course_pk']
-            return Paid.objects.filter(course__pk=course_pk, user=self.request.user)
+        duplicate_paid = Paid.objects.filter(course=course, user=request.user).first()
 
-        def create(self, request, *args, **kwargs):
-            course_pk = self.kwargs.get('course_pk')
-            course = Classes.objects.get(pk=course_pk)
+        if duplicate_paid:
+            serializer = self.get_serializer(duplicate_paid)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
+        paid = Paid.objects.create(
+            course=course, user=request.user, paid=False
+        )
+        paid.save()
 
-            duplicate_paid = Paid.objects.filter(course=course, user=request.user).first()
-
-
-            if duplicate_paid:
-                serializer = self.get_serializer(duplicate_paid)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-            paid = Paid.objects.create(
-                course=course, user=request.user, paid=False
-            )
-            paid.save()
-
-            serializer = self.get_serializer(paid)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
+        serializer = self.get_serializer(paid)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
