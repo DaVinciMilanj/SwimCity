@@ -9,6 +9,7 @@ class IsOwnerOrAdmin(BasePermission):
         return obj == request.user
 
 
-class IsOwner(BasePermission):
+class IsStudentOrNone(BasePermission):
     def has_object_permission(self, request, view, obj):
-        return obj == request.user
+        if request.user.status == 'student' or request.user.status is None:
+            return obj.request

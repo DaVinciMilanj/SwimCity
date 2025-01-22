@@ -1,7 +1,8 @@
 from decimal import Decimal
 
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models import Q
+from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 from rest_framework.exceptions import ValidationError
 from django_jalali.db import models as jmodels
@@ -9,8 +10,13 @@ from accounts.models import CustomUser
 # Create your models here.
 import random
 
-
 # Create your models here.
+
+
+STATUS_CUSTOMUSER_DEFAULT = 'default'
+STATUS_CUSTOMUSER_TEACHER = 'teacher'
+STATUS_CUSTOMUSER_STUDENT = 'student'
+
 
 class Pool(models.Model):
     STATUS_POOL_PUBLIC = 'public'
@@ -24,8 +30,8 @@ class Pool(models.Model):
     STATUS_CUSTOMUSER_MALE = 'male'
 
     GENDER = (
-        (STATUS_CUSTOMUSER_FEMALE, 'دختر'),
-        (STATUS_CUSTOMUSER_MALE, 'پسر')
+        (STATUS_CUSTOMUSER_FEMALE, 'زنانه'),
+        (STATUS_CUSTOMUSER_MALE, 'مردانه')
     )
     gender = models.CharField(choices=GENDER, max_length=10, null=True, blank=True)
     image = models.ImageField(upload_to='pool_images/', null=True, blank=True)
@@ -35,15 +41,13 @@ class Pool(models.Model):
     status = models.CharField(choices=STATUS, max_length=20, blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} - {self.get_gender_display()}"
 
 
 class CreateClass(models.Model):
-    STATUS_CLASSES_PRIVATE = 'private'
     STATUS_CLASSES_PUBLIC = 'public'
     STATUS_CLASSES_MIDPRIV = 'mid'
     STATUS = (
-        (STATUS_CLASSES_PRIVATE, 'خصوصی'),
         (STATUS_CLASSES_PUBLIC, 'عمومی'),
         (STATUS_CLASSES_MIDPRIV, 'نیمه خصوصی')
     )
@@ -53,8 +57,8 @@ class CreateClass(models.Model):
     STATUS_CUSTOMUSER_MALE = 'male'
 
     GENDER = (
-        (STATUS_CUSTOMUSER_FEMALE, 'دختر'),
-        (STATUS_CUSTOMUSER_MALE, 'پسر')
+        (STATUS_CUSTOMUSER_FEMALE, 'زنانه'),
+        (STATUS_CUSTOMUSER_MALE, 'مردانه')
     )
     gender = models.CharField(choices=GENDER, max_length=10, null=True, blank=True)
 
@@ -83,6 +87,8 @@ class CreateClass(models.Model):
         super().save(*args, **kwargs)
 
 
+# -----------------------------------------------------------------------------------------------------------------------
+
 class Classes(models.Model):
     course_start = models.ForeignKey(CreateClass, on_delete=models.PROTECT, related_name='course_start', null=True,
                                      blank=True)
@@ -108,6 +114,8 @@ class Classes(models.Model):
         return str(self.course_start)
 
 
+# ------------------------------------------------------------------------------------------------------------------
+
 class StartClass(models.Model):
     course = models.OneToOneField(Classes, on_delete=models.PROTECT, related_name='course', primary_key=True)
     student = models.ManyToManyField(CustomUser, limit_choices_to={'status': 'student'},
@@ -115,29 +123,29 @@ class StartClass(models.Model):
     limit_register = models.PositiveIntegerField(default=3)
     register_count = models.PositiveIntegerField(default=0)
 
-    def update_register_count(self):
-        """به‌روزرسانی تعداد ثبت‌نام‌ها بر اساس تعداد دانش‌آموزان"""
-        self.register_count = self.student.count()
-        # از update_fields استفاده کنید تا فقط فیلد register_count ذخیره شود
-        self.save(update_fields=['register_count'])
-
-    def clean(self):
-        # بررسی تعداد ثبت‌نام‌ها
-        current_count = self.register_count
-        if current_count >= self.limit_register:
-            raise ValidationError(f"تعداد ثبت‌نام‌ها نمی‌تواند بیشتر از {self.limit_register} باشد.")
-
     def save(self, *args, **kwargs):
-        # بررسی جنسیت برای ثبت نام
-        gender = self.course.course_start.gender
-        for student in self.student.all():
-            if student.gender != gender:
-                raise ValidationError('جنسیت دانش‌آموز با جنسیت کلاس مطابقت ندارد.')
-
-
+        status_limits = {
+            CreateClass.STATUS_CLASSES_PUBLIC: 15,
+            CreateClass.STATUS_CLASSES_MIDPRIV: 8,
+            CreateClass.STATUS_CLASSES_PRIVATE: 3
+        }
+        status_class = self.course.course_start.status
+        self.limit_register = status_limits.get(status_class, 3)  # مقدار پیش‌فرض 3
         super().save(*args, **kwargs)
 
 
+def validate_student_gender(sender, instance, action, pk_set, **kwargs):
+    if action == 'pre_add':
+
+        class_gender = instance.course.course_start.gender
+
+        for student_id in pk_set:
+            student = CustomUser.objects.get(pk=student_id)
+            if student.gender != class_gender:
+                raise ValidationError(f"دانش‌آموز {student.username} با جنسیت کلاس مطابقت ندارد.")
+
+
+m2m_changed.connect(validate_student_gender, sender=StartClass.student.through)
 
 
 def create_start_class(sender, instance, created, **kwargs):
@@ -146,18 +154,43 @@ def create_start_class(sender, instance, created, **kwargs):
         start_class.save()
 
 
-post_save.connect(create_start_class , sender=Classes)
+post_save.connect(create_start_class, sender=Classes)
 
 
+class RequestPrivateClass(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='user_private',
+                             limit_choices_to=Q(status__in=[CustomUser.STATUS_CUSTOMUSER_DEFAULT,
+                                                            CustomUser.STATUS_CUSTOMUSER_STUDENT]) | Q(
+                                 status__isnull=True))
+    teacher = models.ForeignKey(CustomUser, blank=True, null=True, on_delete=models.CASCADE,
+                                limit_choices_to={'status': 'teacher'}, related_name='teacher_private')
+    pool = models.ForeignKey(Pool, blank=True, null=True, on_delete=models.CASCADE, related_name='pool_private')
+    person = models.PositiveSmallIntegerField(default=1)
+    massage = models.TextField()
+    acceptation = models.BooleanField(blank=True, null=True)
+
+    def __str__(self):
+        return self.user.last_name
 
 
+# ----------------------------------------------------------------------------------------------------------------------
 
-
-
+class PrivateClass(models.Model):
+    class_requested = models.ForeignKey(RequestPrivateClass, on_delete=models.CASCADE, related_name='class_requested',
+                                        limit_choices_to={'acceptation': True})
+    teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'status': 'teacher'},
+                                related_name='private_class_teacher' , blank=True , null=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='private_student', blank=True,
+                             null=True, limit_choices_to=Q(status__in=[CustomUser.STATUS_CUSTOMUSER_DEFAULT,
+                                                                       CustomUser.STATUS_CUSTOMUSER_STUDENT]) | Q(status__isnull=True))
+    start_date = jmodels.jDateField()
+    start_time = models.TimeField()
+    price = models.PositiveBigIntegerField()
+    paid = models.BooleanField(default=False)
 
 
 class Paid(models.Model):
-    course = models.ForeignKey(Classes, on_delete=models.CASCADE, related_name='course_paid')
+    course = models.ForeignKey(Classes, on_delete=models.PROTECT, related_name='course_paid', blank=True, null=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='user_paid')
     paid = models.BooleanField(default=False)
 

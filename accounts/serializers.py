@@ -40,6 +40,7 @@ class SignUpSerializer(serializers.ModelSerializer):
         user = CustomUser.objects.create(
             username=validated_data['username'],
             phone=validated_data['phone'],
+            status='default'
         )
         user.set_password(validated_data['password'])
         user.save()
@@ -54,14 +55,14 @@ class LoginSerializer(serializers.Serializer):
 class ProfileCompleteSerializer(serializers.ModelSerializer):
     birthday = JDateField(
         required=True,
-        format='%Y-%m-%d',  # فرمت تاریخ جلالی به شکل سال-ماه-روز
-        input_formats=['%Y-%m-%d']  # فرمت ورودی برای تاریخ جلالی
+        format='%Y-%m-%d',  # فرمت خروجی
+        input_formats=['%Y-%m-%d', 'jYYYY-jMM-jDD']  # فرمت‌های ورودی مجاز
     )
 
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'phone', 'code_meli', 'first_name', 'last_name', 'email', 'birthday', 'gender',
-                  'image']
+                  'image' , 'status']
         read_only_fields = ['username']
 
 
@@ -71,10 +72,6 @@ class TeacherListSerializer(serializers.ModelSerializer):
         fields = ['id', 'first_name', 'last_name', 'code_meli', 'phone', 'birthday', 'image', 'active', 'average_rate']
 
 
-class GetUserRateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RateToTeacher
-        fields = ['user', 'teacher', 'rate']
 
 
 class RateToTeacherSerializer(serializers.ModelSerializer):
@@ -101,3 +98,8 @@ class TeacherSignUpFormSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherSignUpForm
         fields = ['l_name', 'phone_number', 'massage']
+
+class GetUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id' , 'username' , 'first_name','last_name' , 'phone' , 'birthday' , 'status']

@@ -74,7 +74,7 @@ class TeacherSignUpForm(models.Model):
     l_name = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=16)
     massage = models.TextField()
-    accepted = models.BooleanField(default=False)
+    accepted = models.BooleanField( default=False )
 
 
 @receiver(post_save, sender=TeacherSignUpForm)

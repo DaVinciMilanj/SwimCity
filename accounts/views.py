@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from  rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.permissions import *
 from rest_framework import status
@@ -19,6 +19,12 @@ from kavenegar import *
 # Create your views here.
 
 User = get_user_model()
+
+
+class GetUsersViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = GetUserSerializer
+    queryset = CustomUser.objects.all()
 
 
 class SignUpViewSet(ModelViewSet):
@@ -169,4 +175,3 @@ class TeacherSignUpViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
