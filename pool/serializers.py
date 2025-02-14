@@ -25,19 +25,15 @@ class CoursesSerializer(serializers.ModelSerializer):
         input_formats=['%Y-%m-%d']
     )
     teacher = serializers.CharField(source='teacher.last_name', read_only=True)
+    limit_register = serializers.IntegerField(source='course.limit_register', read_only=True)
+    register_count = serializers.IntegerField(source='course.register_count', read_only=True)
 
     class Meta:
         model = Classes
         fields = ['id', 'pool', 'teacher', 'start', 'end', 'start_clock', 'end_clock', 'price', 'discount',
-                  'total_price']
+                  'total_price' , 'limit_register','register_count']
 
 
-class PaidSerializer(serializers.ModelSerializer):
-    price = serializers.IntegerField(source='course.total_price', read_only=True)
-
-    class Meta:
-        model = Paid
-        fields = ['id', 'price', 'course', 'user']
 
 
 class RequestPrivateClassSerializer(serializers.ModelSerializer):
@@ -85,3 +81,11 @@ class ShowPrivateClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrivateClass
         fields = ['id', 'class_requested', 'pool', 'teacher', 'user', 'start_date', 'start_time', 'price', 'paid']
+
+
+class PaidSerializer(serializers.ModelSerializer):
+    price = serializers.IntegerField(source='course.total_price', read_only=True)
+
+    class Meta:
+        model = Paid
+        fields = ['id', 'price', 'course', 'user']

@@ -94,8 +94,7 @@ class Teacher(models.Model):
     birthday = jmodels.jDateField()
     image = models.ImageField(upload_to='teacher', blank=True)
     active = models.BooleanField(default=True)
-    average_rate = models.FloatField(default=0.0)  # New field
-
+    average_rate = models.FloatField(default=0.0) 
     def __str__(self):
         return self.last_name
 
@@ -113,32 +112,26 @@ def get_previous_status(sender, instance, **kwargs):
 
 @receiver(post_save, sender=CustomUser)
 def add_or_update_teacher(sender, instance, created, **kwargs):
-    print(f"Post-save signal triggered for user: {instance}")  # Debugging
-    if created and instance.status == CustomUser.STATUS_CUSTOMUSER_TEACHER:
-        print("Creating teacher record...")
-        Teacher.objects.create(
-            first_name=instance.first_name,
-            last_name=instance.last_name,
-            code_meli=instance.code_meli,
-            phone=instance.phone,
-            birthday=instance.birthday,
-            image=instance.image
-        )
-    if not created:
-        previous_status = user_previous_status.get(instance.pk)
-        if instance.status == CustomUser.STATUS_CUSTOMUSER_TEACHER:
-            print("Updating teacher record...")
-            Teacher.objects.update_or_create(
+    if instance.status == CustomUser.STATUS_CUSTOMUSER_TEACHER:
+        if Teacher.objects.filter(phone=instance.phone).exists():
+            # اگر معلمی با این شماره تلفن وجود دارد، اطلاعاتش را آپدیت کن
+            Teacher.objects.filter(phone=instance.phone).update(
+                first_name=instance.first_name,
+                last_name=instance.last_name,
                 code_meli=instance.code_meli,
-                defaults={
-                    "first_name": instance.first_name,
-                    "last_name": instance.last_name,
-                    "phone": instance.phone,
-                    "birthday": instance.birthday,
-                    "image": instance.image
-                }
+                birthday=instance.birthday,
+                image=instance.image
             )
-
+        else:
+            # اگر وجود نداشت، رکورد جدیدی بساز
+            Teacher.objects.create(
+                first_name=instance.first_name,
+                last_name=instance.last_name,
+                code_meli=instance.code_meli,
+                phone=instance.phone,
+                birthday=instance.birthday,
+                image=instance.image
+            )
 
 class RateToTeacher(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

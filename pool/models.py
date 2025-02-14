@@ -82,7 +82,7 @@ class CreateClass(models.Model):
             while True:
                 code = f'{random.randint(0, 9999):04}'
                 if not CreateClass.objects.filter(course_code=code).exists():
-                    self.course_code = code
+                    self.course_code = int(code)
                     break
         super().save(*args, **kwargs)
 
@@ -127,7 +127,6 @@ class StartClass(models.Model):
         status_limits = {
             CreateClass.STATUS_CLASSES_PUBLIC: 15,
             CreateClass.STATUS_CLASSES_MIDPRIV: 8,
-            CreateClass.STATUS_CLASSES_PRIVATE: 3
         }
         status_class = self.course.course_start.status
         self.limit_register = status_limits.get(status_class, 3)  # مقدار پیش‌فرض 3
@@ -139,8 +138,9 @@ def validate_student_gender(sender, instance, action, pk_set, **kwargs):
 
         class_gender = instance.course.course_start.gender
 
+        students = {s.id: s for s in CustomUser.objects.filter(id__in=pk_set)}
         for student_id in pk_set:
-            student = CustomUser.objects.get(pk=student_id)
+            student = students[student_id]
             if student.gender != class_gender:
                 raise ValidationError(f"دانش‌آموز {student.username} با جنسیت کلاس مطابقت ندارد.")
 
@@ -179,10 +179,11 @@ class PrivateClass(models.Model):
     class_requested = models.ForeignKey(RequestPrivateClass, on_delete=models.CASCADE, related_name='class_requested',
                                         limit_choices_to={'acceptation': True})
     teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'status': 'teacher'},
-                                related_name='private_class_teacher' , blank=True , null=True)
+                                related_name='private_class_teacher', blank=True, null=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='private_student', blank=True,
                              null=True, limit_choices_to=Q(status__in=[CustomUser.STATUS_CUSTOMUSER_DEFAULT,
-                                                                       CustomUser.STATUS_CUSTOMUSER_STUDENT]) | Q(status__isnull=True))
+                                                                       CustomUser.STATUS_CUSTOMUSER_STUDENT]) | Q(
+            status__isnull=True))
     start_date = jmodels.jDateField()
     start_time = models.TimeField()
     price = models.PositiveBigIntegerField()
@@ -216,3 +217,11 @@ class Paid(models.Model):
                 self.user.save()
             else:
                 raise ValueError("Class is full. No more students can be added.")
+
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=100, unique=True)
+    active = models.BooleanField(default=False)
+    start = jmodels.jDateTimeField()
+    end = jmodels.jDateTimeField()
+    discount = models.PositiveSmallIntegerField()

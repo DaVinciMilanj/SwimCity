@@ -1,3 +1,4 @@
+import jdatetime
 from django.shortcuts import render, get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -35,6 +36,33 @@ class CourseViewSet(ModelViewSet):
             course_start__pool=pools_pk
         )
         return queryset
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def check_coupon(self, request, pools_pk=None, pk=None):
+        coupon_code = request.data.get('coupon_code')
+        time = jdatetime.datetime.now()
+
+        if not coupon_code:
+            return Response({"error": "کد کوپن الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            coupon = Coupon.objects.get(code__iexact=coupon_code, start__lte=time, end__gte=time, active=True)
+
+            # بررسی دستی اعتبار کوپن (به‌جای is_valid)
+            if not coupon.active:
+                return Response({"error": "کوپن نامعتبر است."}, status=status.HTTP_400_BAD_REQUEST)
+
+            class_obj = self.get_object()
+            discount_amount = (class_obj.price * coupon.discount) // 100  # محاسبه تخفیف
+            final_price = class_obj.price - discount_amount  # قیمت نهایی
+
+            return Response({
+                "discount": discount_amount,
+                "final_price": final_price
+            }, status=status.HTTP_200_OK)
+
+        except Coupon.DoesNotExist:
+            return Response({"error": "کوپن یافت نشد."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class PaidViewSet(ModelViewSet):

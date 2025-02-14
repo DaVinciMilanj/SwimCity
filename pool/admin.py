@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django_jalali.admin.filters import JDateFieldListFilter
+
 from .models import *
 
 
@@ -72,9 +74,18 @@ admin.site.register(RequestPrivateClass, RequestPrivateClassAdmin)
 
 
 class CreatePrivateClassAdmin(admin.ModelAdmin):
-    list_display = ['class_requested','user','start_date','start_time','price' , 'paid']
-    fields = ['class_requested','user','start_date','start_time','price' ,'paid']
+    list_display = ['class_requested', 'user', 'start_date', 'start_time', 'price', 'paid']
+    fields = ['class_requested', 'user', 'start_date', 'start_time', 'price', 'paid']
 
 
-admin.site.register(PrivateClass,CreatePrivateClassAdmin)
+admin.site.register(PrivateClass, CreatePrivateClassAdmin)
 
+
+class CouponAdmin(admin.ModelAdmin):
+    list_display = ['code', 'start', 'end', 'discount', 'active']
+    list_filter = (
+        ('code', JDateFieldListFilter),
+    )
+
+
+admin.site.register(Coupon, CouponAdmin)

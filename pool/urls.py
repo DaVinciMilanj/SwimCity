@@ -10,7 +10,6 @@ router.register('pool', views.PoolViewSet, basename='pools')
 pool_routers = routers.NestedDefaultRouter(router, 'pool', lookup='pools')
 
 pool_routers.register('course', views.CourseViewSet, basename='pools-course')
-
 course_routers = routers.NestedDefaultRouter(pool_routers, 'course', lookup='course')
 
 router.register('private-class' , views.PrivateClassRequestViewSet , basename='private-class')

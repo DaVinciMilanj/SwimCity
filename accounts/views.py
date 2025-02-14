@@ -15,6 +15,7 @@ from .permissions import *
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model, authenticate
 from kavenegar import *
+import ghasedak_sms
 
 # Create your views here.
 
@@ -136,34 +137,77 @@ class TeacherViewList(ModelViewSet):
 
 
 class ForgotPasswordViewSet(ViewSet):
-    @action(detail=False, methods=['post'], url_path='send-recovery-code')
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny], url_path='send-recovery-code')
     def send_recovery_code(self, request):
         phone = request.data.get('phone')
 
         # بررسی وجود کاربر
         try:
-            user = User.objects.get(phone=phone)
-        except User.DoesNotExist:
+            user = CustomUser.objects.get(phone=phone)
+        except CustomUser.DoesNotExist:
             return Response({'error': 'User with this phone number does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # تولید کد بازیابی
-        recovery_code = random.randint(100000, 999999)
-        user.recovery_code = recovery_code  # ذخیره در فیلد مرتبط
+        # تولید و ذخیره کد بازیابی (به عنوان رشته)
+        recovery_code = str(random.randint(100000, 999999))
+        user.recovery_code = recovery_code
         user.save()
 
-        # ارسال پیامک
+        # ارسال پیامک با قاصدک
         try:
-            api = KavenegarAPI(settings.KAVENEGAR_API_KEY)
-            params = {
-                'sender': '2000660110',
-                'receptor': phone,
-                'message': f'کد بازیابی شما: {recovery_code}',
-            }
-            api.sms_send(params)
-        except (APIException, HTTPException) as e:
+            sms_api = ghasedak_sms.Ghasedak(settings.GHASEDAK_API_KEY)
+            response = sms_api.send_single_sms(
+                ghasedak_sms.SendSingleSmsInput(
+                    message=f'کد بازیابی شما: {recovery_code}',
+                    receptor=phone,
+                    line_number='3005006004072',  # شماره ارسال‌کننده پیامک
+                    send_date='',
+                    client_reference_id=''
+                )
+            )
+        except ghasedak_sms.error.ApiException as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({'message': 'Recovery code sent successfully.'}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny], url_path='verify-recovery-code')
+    def verify_recovery_code(self, request):
+        phone = request.data.get('phone')
+        recovery_code = request.data.get('recoveryCode')
+
+        try:
+            user = CustomUser.objects.get(phone=phone)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User with this phone number does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # بررسی اعتبار کد بازیابی
+        if str(user.recovery_code) != str(recovery_code):
+            return Response({'error': 'Invalid recovery code'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'message': 'Recovery code verified successfully.'}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny], url_path='reset-password')
+    def reset_password(self, request):
+        phone = request.data.get('phone')
+        recovery_code = request.data.get('recoveryCode')
+        new_password = request.data.get('newPassword')
+
+        try:
+            user = CustomUser.objects.get(phone=phone)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User with this phone number does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # بررسی کد بازیابی
+        if str(user.recovery_code) != str(recovery_code):
+            return Response({'error': 'Invalid recovery code'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # تنظیم رمز جدید
+        user.set_password(new_password)
+        user.recovery_code = None  # پاک کردن کد بازیابی بعد از استفاده
+        user.save()
+
+        return Response({'message': 'Password reset successfully.'}, status=status.HTTP_200_OK)
 
 
 class TeacherSignUpViewSet(ModelViewSet):
