@@ -142,19 +142,13 @@ class ForgotPasswordViewSet(ViewSet):
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], url_path='send-recovery-code')
     def send_recovery_code(self, request):
         phone = request.data.get('phone')
-
-        # بررسی وجود کاربر
         try:
             user = CustomUser.objects.get(phone=phone)
         except CustomUser.DoesNotExist:
             return Response({'error': 'User with this phone number does not exist.'}, status=status.HTTP_404_NOT_FOUND)
-
-        # تولید و ذخیره کد بازیابی (به عنوان رشته)
         recovery_code = str(random.randint(100000, 999999))
         user.recovery_code = recovery_code
         user.save()
-
-        # ارسال پیامک با قاصدک
         try:
             sms_api = ghasedak_sms.Ghasedak(settings.GHASEDAK_API_KEY)
             response = sms_api.send_single_sms(
@@ -162,13 +156,10 @@ class ForgotPasswordViewSet(ViewSet):
                     message=f'کد بازیابی شما: {recovery_code}',
                     receptor=phone,
                     line_number='3005006004072',  # شماره ارسال‌کننده پیامک
-                    send_date='',
-                    client_reference_id=''
                 )
             )
         except ghasedak_sms.error.ApiException as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
         return Response({'message': 'Recovery code sent successfully.'}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], url_path='verify-recovery-code')
