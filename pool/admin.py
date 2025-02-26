@@ -44,7 +44,8 @@ admin.site.register(Classes, ClassesAdmin)
 class StartClassAdmin(admin.ModelAdmin):
     list_display = ['course', 'teacher', 'register_count', 'limit_register']
     fields = ['course', 'student', 'register_count', 'limit_register', 'teacher']
-    readonly_fields = ['teacher']
+    autocomplete_fields = ['student']
+    readonly_fields = ['teacher' , 'register_count']
 
     def teacher(self, obj):
         return obj.course.teacher

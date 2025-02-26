@@ -31,6 +31,7 @@ from django.contrib.auth.admin import UserAdmin
 
 class CustomUserAdmin(admin.ModelAdmin):
     list_display = ['last_name', 'phone', 'username']
+    search_fields = ['username', 'first_name', 'last_name', 'phone']  # این خط ضروری است
 
 
 admin.site.register(CustomUser, CustomUserAdmin)

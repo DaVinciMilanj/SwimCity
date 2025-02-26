@@ -15,6 +15,7 @@ class PoolsSerializer(serializers.ModelSerializer):
 
 class CoursesSerializer(serializers.ModelSerializer):
     pool = serializers.CharField(source='course_start.pool', read_only=True)
+    code = serializers.IntegerField(source='course_start.course_code', read_only=True)
     start = JDateField(
         required=True,
         format='%Y-%m-%d',  # فرمت تاریخ جلالی به شکل سال-ماه-روز
@@ -30,10 +31,8 @@ class CoursesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Classes
-        fields = ['id', 'pool', 'teacher', 'start', 'end', 'start_clock', 'end_clock', 'price', 'discount',
-                  'total_price' , 'limit_register','register_count']
-
-
+        fields = ['id', 'pool','code','teacher', 'start', 'end', 'start_clock', 'end_clock', 'price', 'discount',
+                  'total_price', 'limit_register', 'register_count']
 
 
 class RequestPrivateClassSerializer(serializers.ModelSerializer):
@@ -84,8 +83,6 @@ class ShowPrivateClassSerializer(serializers.ModelSerializer):
 
 
 class PaidSerializer(serializers.ModelSerializer):
-    price = serializers.IntegerField(source='course.total_price', read_only=True)
-
     class Meta:
         model = Paid
         fields = ['id', 'price', 'course', 'user']

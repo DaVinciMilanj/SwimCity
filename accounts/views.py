@@ -155,7 +155,7 @@ class ForgotPasswordViewSet(ViewSet):
                 ghasedak_sms.SendSingleSmsInput(
                     message=f'کد بازیابی شما: {recovery_code}',
                     receptor=phone,
-                    line_number='3005006004072',  # شماره ارسال‌کننده پیامک
+                    line_number='30005088',  
                 )
             )
         except ghasedak_sms.error.ApiException as e:

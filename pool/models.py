@@ -33,12 +33,17 @@ class Pool(models.Model):
         (STATUS_CUSTOMUSER_FEMALE, 'زنانه'),
         (STATUS_CUSTOMUSER_MALE, 'مردانه')
     )
-    gender = models.CharField(choices=GENDER, max_length=10, null=True, blank=True)
-    image = models.ImageField(upload_to='pool_images/', null=True, blank=True)
-    name = models.CharField(max_length=50)
-    active = models.BooleanField(default=True)
-    address = models.TextField()
-    status = models.CharField(choices=STATUS, max_length=20, blank=True, null=True)
+
+    gender = models.CharField(choices=GENDER, max_length=10, null=True, blank=True, verbose_name="جنسیت")
+    image = models.ImageField(upload_to='pool_images/', null=True, blank=True, verbose_name="تصویر")
+    name = models.CharField(max_length=50, verbose_name="نام استخر")
+    active = models.BooleanField(default=True, verbose_name="فعال")
+    address = models.TextField(verbose_name="آدرس")
+    status = models.CharField(choices=STATUS, max_length=20, blank=True, null=True, verbose_name="وضعیت استخر")
+
+    class Meta:
+        verbose_name = "استخر"
+        verbose_name_plural = "استخرها"
 
     def __str__(self):
         return f"{self.name} - {self.get_gender_display()}"
@@ -51,8 +56,8 @@ class CreateClass(models.Model):
         (STATUS_CLASSES_PUBLIC, 'عمومی'),
         (STATUS_CLASSES_MIDPRIV, 'نیمه خصوصی')
     )
-    course_code = models.IntegerField(unique=True, blank=True, null=True)
 
+    course_code = models.IntegerField(unique=True, blank=True, null=True, verbose_name="کد کلاس")
     STATUS_CUSTOMUSER_FEMALE = 'female'
     STATUS_CUSTOMUSER_MALE = 'male'
 
@@ -60,11 +65,17 @@ class CreateClass(models.Model):
         (STATUS_CUSTOMUSER_FEMALE, 'زنانه'),
         (STATUS_CUSTOMUSER_MALE, 'مردانه')
     )
-    gender = models.CharField(choices=GENDER, max_length=10, null=True, blank=True)
 
-    status = models.CharField(choices=STATUS, max_length=10)
-    pool = models.ForeignKey(Pool, limit_choices_to={'status': 'education'}, on_delete=models.PROTECT,
-                             related_name='pool_course', blank=True, null=True)
+    gender = models.CharField(choices=GENDER, max_length=10, null=True, blank=True, verbose_name="جنسیت کلاس")
+    status = models.CharField(choices=STATUS, max_length=10, verbose_name="نوع کلاس")
+    pool = models.ForeignKey(
+        Pool, limit_choices_to={'status': 'education'}, on_delete=models.PROTECT,
+        related_name='pool_course', blank=True, null=True, verbose_name="استخر"
+    )
+
+    class Meta:
+        verbose_name = "کد کلاس"
+        verbose_name_plural = "کد کلاس ها"
 
     def __str__(self):
         return str(self.course_code)
@@ -90,18 +101,26 @@ class CreateClass(models.Model):
 # -----------------------------------------------------------------------------------------------------------------------
 
 class Classes(models.Model):
-    course_start = models.ForeignKey(CreateClass, on_delete=models.PROTECT, related_name='course_start', null=True,
-                                     blank=True)
-    teacher = models.ForeignKey(CustomUser, on_delete=models.PROTECT, limit_choices_to={'status': 'teacher'}
-                                , related_name='teacher_classes')
-    start = jmodels.jDateField(null=True)
-    end = jmodels.jDateField(blank=True)
-    start_clock = models.TimeField()
-    end_clock = models.TimeField()
-    active = models.BooleanField(default=False)
-    price = models.PositiveBigIntegerField()
-    discount = models.PositiveIntegerField(blank=True, null=True)
-    total_price = models.PositiveBigIntegerField(blank=True)
+    course_start = models.ForeignKey(
+        CreateClass, on_delete=models.PROTECT, related_name='course_start',
+        null=True, blank=True, verbose_name="کد دوره"
+    )
+    teacher = models.ForeignKey(
+        CustomUser, on_delete=models.PROTECT, limit_choices_to={'status': 'teacher'},
+        related_name='teacher_classes', verbose_name="مربی"
+    )
+    start = jmodels.jDateField(null=True, verbose_name="تاریخ شروع")
+    end = jmodels.jDateField(null=True, blank=True, verbose_name="تاریخ پایان")
+    start_clock = models.TimeField(verbose_name="ساعت شروع")
+    end_clock = models.TimeField(verbose_name="ساعت پایان")
+    active = models.BooleanField(default=False, verbose_name="فعال")
+    price = models.PositiveBigIntegerField(verbose_name="قیمت")
+    discount = models.PositiveIntegerField(blank=True, null=True, verbose_name="درصد تخفیف")
+    total_price = models.PositiveBigIntegerField(blank=True, verbose_name="قیمت نهایی")
+
+    class Meta:
+        verbose_name = "کلاس"
+        verbose_name_plural = "کلاس‌ها"
 
     @property
     def total_price(self):
@@ -117,11 +136,16 @@ class Classes(models.Model):
 # ------------------------------------------------------------------------------------------------------------------
 
 class StartClass(models.Model):
-    course = models.OneToOneField(Classes, on_delete=models.PROTECT, related_name='course', primary_key=True)
-    student = models.ManyToManyField(CustomUser, limit_choices_to={'status': 'student'},
-                                     related_name='class_student', blank=True)
-    limit_register = models.PositiveIntegerField(default=3)
-    register_count = models.PositiveIntegerField(default=0)
+    course = models.OneToOneField(
+        Classes, on_delete=models.PROTECT, related_name='course',
+        primary_key=True, verbose_name="دوره"
+    )
+    student = models.ManyToManyField(
+        CustomUser, limit_choices_to={'status': 'student'},
+        related_name='class_student', blank=True, verbose_name="دانش‌آموزان"
+    )
+    limit_register = models.PositiveIntegerField(default=3, verbose_name="حد ثبت‌نام")
+    register_count = models.PositiveIntegerField(default=0, verbose_name="تعداد ثبت‌نام‌شده‌ها")
 
     def save(self, *args, **kwargs):
         status_limits = {
@@ -129,8 +153,15 @@ class StartClass(models.Model):
             CreateClass.STATUS_CLASSES_MIDPRIV: 8,
         }
         status_class = self.course.course_start.status
-        self.limit_register = status_limits.get(status_class, 3)  # مقدار پیش‌فرض 3
+        self.limit_register = status_limits.get(status_class, 3)  # مقدار پیش‌فرض ۳
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"شروع کلاس: {self.course}"
+
+    class Meta:
+        verbose_name = "شروع کلاس"
+        verbose_name_plural = "شروع کلاس‌ها"
 
 
 def validate_student_gender(sender, instance, action, pk_set, **kwargs):
@@ -157,71 +188,129 @@ def create_start_class(sender, instance, created, **kwargs):
 post_save.connect(create_start_class, sender=Classes)
 
 
+def update_register_count(sender, instance, action, pk_set, **kwargs):
+    if action in ['post_add', 'post_remove', 'post_clear']:
+        new_count = instance.student.count()  # تعداد جدید دانش‌آموزان
+        if instance.register_count != new_count:  # اگر مقدار تغییر نکرده، ذخیره نکنیم
+            instance.register_count = new_count
+            instance.save(update_fields=['register_count'])  # فقط این فیلد را ذخیره کن
+
+
+m2m_changed.connect(update_register_count, sender=StartClass.student.through)
+
+
+# ---------------------------------------------------------------------------------------------------------
+
+
 class RequestPrivateClass(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='user_private',
-                             limit_choices_to=Q(status__in=[CustomUser.STATUS_CUSTOMUSER_DEFAULT,
-                                                            CustomUser.STATUS_CUSTOMUSER_STUDENT]) | Q(
-                                 status__isnull=True))
-    teacher = models.ForeignKey(CustomUser, blank=True, null=True, on_delete=models.CASCADE,
-                                limit_choices_to={'status': 'teacher'}, related_name='teacher_private')
-    pool = models.ForeignKey(Pool, blank=True, null=True, on_delete=models.CASCADE, related_name='pool_private')
-    person = models.PositiveSmallIntegerField(default=1)
-    massage = models.TextField()
-    acceptation = models.BooleanField(blank=True, null=True)
+    user = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='user_private',
+        limit_choices_to=Q(status__in=[CustomUser.STATUS_CUSTOMUSER_DEFAULT,
+                                       CustomUser.STATUS_CUSTOMUSER_STUDENT]) | Q(status__isnull=True),
+        verbose_name="کاربر درخواست‌دهنده"
+    )
+    teacher = models.ForeignKey(
+        CustomUser, blank=True, null=True, on_delete=models.CASCADE,
+        limit_choices_to={'status': 'teacher'}, related_name='teacher_private',
+        verbose_name="مربی"
+    )
+    pool = models.ForeignKey(
+        Pool, blank=True, null=True, on_delete=models.CASCADE,
+        related_name='pool_private', verbose_name="استخر"
+    )
+    person = models.PositiveSmallIntegerField(default=1, verbose_name="تعداد افراد")
+    massage = models.TextField(verbose_name="پیام")
+    acceptation = models.BooleanField(blank=True, null=True, verbose_name="تأیید شده")
 
     def __str__(self):
-        return self.user.last_name
+        return f"درخواست خصوصی - {self.user.last_name}"
+
+    class Meta:
+        verbose_name = "درخواست کلاس خصوصی"
+        verbose_name_plural = "درخواست‌های کلاس خصوصی"
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 class PrivateClass(models.Model):
-    class_requested = models.ForeignKey(RequestPrivateClass, on_delete=models.CASCADE, related_name='class_requested',
-                                        limit_choices_to={'acceptation': True})
-    teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'status': 'teacher'},
-                                related_name='private_class_teacher', blank=True, null=True)
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='private_student', blank=True,
-                             null=True, limit_choices_to=Q(status__in=[CustomUser.STATUS_CUSTOMUSER_DEFAULT,
-                                                                       CustomUser.STATUS_CUSTOMUSER_STUDENT]) | Q(
-            status__isnull=True))
-    start_date = jmodels.jDateField()
-    start_time = models.TimeField()
-    price = models.PositiveBigIntegerField()
-    paid = models.BooleanField(default=False)
+    class_requested = models.ForeignKey(
+        RequestPrivateClass, on_delete=models.CASCADE,
+        related_name='class_requested',
+        limit_choices_to={'acceptation': True},
+        verbose_name="درخواست کلاس"
+    )
+    teacher = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE,
+        limit_choices_to={'status': 'teacher'},
+        related_name='private_class_teacher',
+        blank=True, null=True,
+        verbose_name="مربی"
+    )
+    user = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE,
+        related_name='private_student',
+        blank=True, null=True,
+        limit_choices_to=~Q(status=CustomUser.STATUS_CUSTOMUSER_TEACHER),
+        verbose_name="هنرجو"
+    )
+    start_date = jmodels.jDateField(verbose_name="تاریخ شروع")
+    start_time = models.TimeField(verbose_name="ساعت شروع")
+    price = models.PositiveBigIntegerField(verbose_name="قیمت")
+    paid = models.BooleanField(default=False, verbose_name="پرداخت شده")
+
+    def __str__(self):
+        return f"کلاس خصوصی - {self.teacher.last_name} ({datetime2jalali(self.start_date).strftime('%Y/%m/%d')})"
+
+    class Meta:
+        verbose_name = "کلاس خصوصی"
+        verbose_name_plural = "کلاس‌های خصوصی"
 
 
 class Paid(models.Model):
-    course = models.ForeignKey(Classes, on_delete=models.PROTECT, related_name='course_paid', blank=True, null=True)
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='user_paid')
-    paid = models.BooleanField(default=False)
+    course = models.ForeignKey(
+        Classes, on_delete=models.PROTECT,
+        related_name='course_paid',
+        blank=True, null=True,
+        verbose_name="دوره"
+    )
+    user = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE,
+        related_name='user_paid',
+        verbose_name="کاربر"
+    )
+    price = models.BigIntegerField(verbose_name='مبلغ', default=0)
+    paid = models.BooleanField(default=False, verbose_name="پرداخت شده")
 
     def __str__(self):
-        return self.user.last_name
+        return f"پرداخت {self.user.last_name}"
 
-    def enroll_in_class(self):
-        if self.paid:
+    def save(self, *args, **kwargs):
+        if self.course and not self.price:
+            self.price = self.course.total_price
+        super().save(*args, **kwargs)
 
-            try:
-                start_class = StartClass.objects.get(course=self.course)
-            except StartClass.DoesNotExist:
-                raise ValueError("Class not found for this course.")
+    class Meta:
+        verbose_name = "پرداخت"
+        verbose_name_plural = "پرداخت‌ها"
 
-            if start_class.register_count < start_class.limit_register:
 
-                start_class.student.add(self.user)
-
-                start_class.register_count += 1
-                start_class.save()
-
-                self.user.status = CustomUser.STATUS_CUSTOMUSER_STUDENT
-                self.user.save()
-            else:
-                raise ValueError("Class is full. No more students can be added.")
+@receiver(post_save, sender=Paid)
+def add_student_to_class(sender, instance, created, **kwargs):
+    if instance.paid and instance.course:
+        start_class = StartClass.objects.get(course=instance.course)
+        start_class.student.add(instance.user)
 
 
 class Coupon(models.Model):
-    code = models.CharField(max_length=100, unique=True)
-    active = models.BooleanField(default=False)
-    start = jmodels.jDateTimeField()
-    end = jmodels.jDateTimeField()
-    discount = models.PositiveSmallIntegerField()
+    code = models.CharField(max_length=100, unique=True, verbose_name="کد تخفیف")
+    active = models.BooleanField(default=False, verbose_name="فعال")
+    start = jmodels.jDateTimeField(verbose_name="تاریخ شروع")
+    end = jmodels.jDateTimeField(verbose_name="تاریخ پایان")
+    discount = models.PositiveSmallIntegerField(verbose_name="درصد تخفیف")
+
+    def __str__(self):
+        return f"{self.code} - {self.discount}%"
+
+    class Meta:
+        verbose_name = "کد تخفیف"
+        verbose_name_plural = "کدهای تخفیف"

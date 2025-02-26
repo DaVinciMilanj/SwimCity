@@ -39,42 +39,51 @@ class CustomUser(AbstractUser):
     STATUS_CUSTOMUSER_DEFAULT = 'default'
     STATUS_CUSTOMUSER_TEACHER = 'teacher'
     STATUS_CUSTOMUSER_STUDENT = 'student'
+
     STATUS = (
-        (STATUS_CUSTOMUSER_DEFAULT, 'default'),
-        (STATUS_CUSTOMUSER_TEACHER, 'teacher'),
-        (STATUS_CUSTOMUSER_STUDENT, 'student'),
+        (STATUS_CUSTOMUSER_DEFAULT, 'کاربر عادی'),
+        (STATUS_CUSTOMUSER_TEACHER, 'مربی'),
+        (STATUS_CUSTOMUSER_STUDENT, 'هنرجو'),
     )
 
     STATUS_CUSTOMUSER_FEMALE = 'female'
     STATUS_CUSTOMUSER_MALE = 'male'
 
     GENDER = (
-        (STATUS_CUSTOMUSER_FEMALE, 'دختر'),
-        (STATUS_CUSTOMUSER_MALE, 'پسر')
+        (STATUS_CUSTOMUSER_FEMALE, 'زن'),
+        (STATUS_CUSTOMUSER_MALE, 'مرد')
     )
 
-    code_meli = models.CharField(max_length=15, unique=True, blank=True, null=True)
-    phone = models.CharField(max_length=15, unique=True, blank=True, null=True)
-    birthday = jmodels.jDateField(blank=True, null=True)
-    status = models.CharField(choices=STATUS, max_length=20, blank=True, null=True)
-    gender = models.CharField(choices=GENDER, max_length=10, blank=True, null=True)
-    is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
-    recovery_code = models.CharField(max_length=6, blank=True, null=True)
-    image = models.ImageField(upload_to='profile', null=True, blank=True)
+    code_meli = models.CharField(max_length=15, unique=True, blank=True, null=True, verbose_name="کد ملی")
+    phone = models.CharField(max_length=15, unique=True, blank=True, null=True, verbose_name="شماره تلفن")
+    birthday = jmodels.jDateField(blank=True, null=True, verbose_name="تاریخ تولد")
+    status = models.CharField(choices=STATUS, max_length=20, blank=True, null=True, verbose_name="وضعیت کاربر")
+    gender = models.CharField(choices=GENDER, max_length=10, blank=True, null=True, verbose_name="جنسیت")
+    is_staff = models.BooleanField(default=False, verbose_name="مدیر سیستم")
+    is_superuser = models.BooleanField(default=False, verbose_name="ابرکاربر")
+    recovery_code = models.CharField(max_length=6, blank=True, null=True, verbose_name="کد بازیابی")
+    image = models.ImageField(upload_to='profile', null=True, blank=True, verbose_name="تصویر پروفایل")
 
     objects = CustomUserManager()
 
     def __str__(self):
-        return self.last_name
+        return f"{self.first_name} {self.last_name}"
+
+    class Meta:
+        verbose_name = "کاربر"
+        verbose_name_plural = "کاربران"
 
 
 class TeacherSignUpForm(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='teacher_form')
-    l_name = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=16)
-    massage = models.TextField()
-    accepted = models.BooleanField( default=False )
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='teacher_form', verbose_name='کاربر')
+    l_name = models.CharField(max_length=100, verbose_name='نام خانوادگی')
+    phone_number = models.CharField(max_length=16, verbose_name='شماره تلفن')
+    massage = models.TextField(verbose_name='پیام')
+    accepted = models.BooleanField(default=False, verbose_name='تأیید شده')
+
+    class Meta:
+        verbose_name = 'فرم ثبت‌نام مربی'
+        verbose_name_plural = 'فرم‌های ثبت‌نام مربیان'
 
 
 @receiver(post_save, sender=TeacherSignUpForm)
@@ -87,16 +96,21 @@ def change_user_status_to_teacher(sender, instance, **kwargs):
 
 
 class Teacher(models.Model):
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    code_meli = models.CharField(max_length=15)
-    phone = models.CharField(max_length=15)
-    birthday = jmodels.jDateField()
-    image = models.ImageField(upload_to='teacher', blank=True)
-    active = models.BooleanField(default=True)
-    average_rate = models.FloatField(default=0.0) 
+    first_name = models.CharField(max_length=100, verbose_name='نام')
+    last_name = models.CharField(max_length=100, verbose_name='نام خانوادگی')
+    code_meli = models.CharField(max_length=15, verbose_name='کد ملی')
+    phone = models.CharField(max_length=15, verbose_name='شماره تلفن')
+    birthday = jmodels.jDateField(verbose_name='تاریخ تولد')
+    image = models.ImageField(upload_to='teacher', blank=True, verbose_name='تصویر')
+    active = models.BooleanField(default=True, verbose_name='فعال')
+    average_rate = models.FloatField(default=0.0, verbose_name='امتیاز میانگین')
+
     def __str__(self):
         return self.last_name
+
+    class Meta:
+        verbose_name = 'مربی'
+        verbose_name_plural = 'مربیان'
 
 
 user_previous_status = {}
@@ -133,18 +147,23 @@ def add_or_update_teacher(sender, instance, created, **kwargs):
                 image=instance.image
             )
 
+
 class RateToTeacher(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_rate')
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name='کاربر')
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_rate', verbose_name='معلم')
     rate = models.PositiveIntegerField(
         default=1,
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name='امتیاز'
     )
+
 
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'teacher'], name='unique_rate_per_user_teacher')
         ]
+        verbose_name = 'امتیاز به  مربی'
+        verbose_name_plural = 'امتیاز به مربیان'
 
 
 @receiver(post_save, sender=RateToTeacher)
@@ -153,5 +172,3 @@ def update_teacher_average(sender, instance, **kwargs):
     avg = RateToTeacher.objects.filter(teacher=teacher).aggregate(avg=Avg('rate'))['avg'] or 0.0
     teacher.average_rate = round(avg, 1)
     teacher.save()
-
-

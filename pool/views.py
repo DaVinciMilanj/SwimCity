@@ -75,20 +75,25 @@ class PaidViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         course_pk = self.kwargs.get('course_pk')
-        course = Classes.objects.get(pk=course_pk)
+        course = get_object_or_404(Classes, pk=course_pk)
 
-        duplicate_paid = Paid.objects.filter(course=course, user=request.user).first()
+        # بررسی وجود پرداخت قبلی
+        paid_instance, created = Paid.objects.get_or_create(
+            course=course, user=request.user,
+            defaults={'price': course.total_price, 'paid': True}
+        )
 
-        if duplicate_paid:
-            serializer = self.get_serializer(duplicate_paid)
+        # اگر از قبل وجود داشت، همان را برگردان
+        if not created:
+            serializer = self.get_serializer(paid_instance)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
-        paid = Paid.objects.create(
-            course=course, user=request.user, paid=False
-        )
-        paid.save()
+        # اگر کاربر مبلغ فرستاده باشد، آن را به‌روز کند
+        if 'price' in request.data:
+            paid_instance.price = request.data['price']
+            paid_instance.save()
 
-        serializer = self.get_serializer(paid)
+        serializer = self.get_serializer(paid_instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
