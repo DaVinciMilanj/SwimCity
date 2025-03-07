@@ -125,7 +125,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'swimcity',
         'USER': 'root',
-        'PASSWORD': '123456',
+        'PASSWORD': 'h6cjoIHalqpJv56d',
         'HOST': 'localhost',  # Or an IP Address that your DB is hosted on
         'PORT': '3306',
     }
