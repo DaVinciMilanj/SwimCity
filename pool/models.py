@@ -138,7 +138,8 @@ class Classes(models.Model):
 class StartClass(models.Model):
     course = models.OneToOneField(
         Classes, on_delete=models.PROTECT, related_name='course',
-        primary_key=True, verbose_name="دوره"
+        primary_key=True, verbose_name="دوره",
+
     )
     student = models.ManyToManyField(
         CustomUser, limit_choices_to={'status': 'student'},
@@ -314,3 +315,5 @@ class Coupon(models.Model):
     class Meta:
         verbose_name = "کد تخفیف"
         verbose_name_plural = "کدهای تخفیف"
+
+# -----------------------------------------------------------------------------------------------------------------------

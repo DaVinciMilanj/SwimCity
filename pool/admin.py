@@ -42,13 +42,17 @@ admin.site.register(Classes, ClassesAdmin)
 
 
 class StartClassAdmin(admin.ModelAdmin):
-    list_display = ['course', 'teacher', 'register_count', 'limit_register']
+    list_display = ['course', 'teacher', 'register_count', 'limit_register' , 'start']
     fields = ['course', 'student', 'register_count', 'limit_register', 'teacher']
     autocomplete_fields = ['student']
     readonly_fields = ['teacher' , 'register_count']
+    search_fields = ['course','teacher']
 
     def teacher(self, obj):
         return obj.course.teacher
+
+    def start(self,obj):
+        return obj.course.start
 
     teacher.short_description = 'Teacher L-Name'
 

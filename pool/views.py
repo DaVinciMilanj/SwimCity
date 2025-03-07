@@ -1,6 +1,8 @@
 import jdatetime
 from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
@@ -178,3 +180,19 @@ class CreatePrivateClassViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(teacher=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+class MyCourseViewSet(ModelViewSet):
+    serializer_class = MyCourseSerializer
+    permission_classes = [IsAuthenticated]
+
+
+    def get_queryset(self):
+        now = timezone.now()
+        queryset = StartClass.objects.filter(student=self.request.user , course__start__lte=now, course__end__gte=now ).select_related("course")
+
+        if not queryset.exists():
+            raise NotFound("دوره‌ای برای شما یافت نشد.")
+
+        return queryset

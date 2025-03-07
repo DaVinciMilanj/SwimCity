@@ -25,13 +25,13 @@ class CoursesSerializer(serializers.ModelSerializer):
         format='%Y-%m-%d',  # فرمت تاریخ جلالی به شکل سال-ماه-روز
         input_formats=['%Y-%m-%d']
     )
-    teacher = serializers.CharField(source='teacher.last_name', read_only=True)
+    teacher = TeacherListSerializer()
     limit_register = serializers.IntegerField(source='course.limit_register', read_only=True)
     register_count = serializers.IntegerField(source='course.register_count', read_only=True)
 
     class Meta:
         model = Classes
-        fields = ['id', 'pool','code','teacher', 'start', 'end', 'start_clock', 'end_clock', 'price', 'discount',
+        fields = ['id', 'pool', 'code', 'teacher', 'start', 'end', 'start_clock', 'end_clock', 'price', 'discount',
                   'total_price', 'limit_register', 'register_count']
 
 
@@ -86,3 +86,16 @@ class PaidSerializer(serializers.ModelSerializer):
     class Meta:
         model = Paid
         fields = ['id', 'price', 'course', 'user']
+
+
+class MyCourseSerializer(serializers.ModelSerializer):
+    course = CoursesSerializer()
+    price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StartClass
+        fields = ['course', 'price']
+
+    def get_price(self, obj):
+        paid_instance = Paid.objects.filter(course=obj.course, user=self.context['request'].user).first()
+        return paid_instance.price if paid_instance else 0  # اگر پرداختی وجود نداشت، مقدار ۰ را برگرداند
