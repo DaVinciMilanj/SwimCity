@@ -24,7 +24,11 @@ SECRET_KEY = 'django-insecure-jnwnb!yi%2z&+=_r+m57@43lvo2@w-ma!*mjt&*k=-2e_9_h)5
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "qahramananemrooz.com",
+    "www.qahramananemrooz.com"
+]
+
 
 # Application definition
 
@@ -68,11 +72,13 @@ MIDDLEWARE = [
 
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
-
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200"
+    "http://localhost:4200",
+    "https://qahramananemrooz.com",
+    "https://www.qahramananemrooz.com"
 ]
+
 
 # CORS_ALLOW_METHODS = [
 #     'GET',
@@ -125,7 +131,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'swimcity',
         'USER': 'root',
-        'PASSWORD': 'h6cjoIHalqpJv56d',
+        'PASSWORD': '123456',
         'HOST': 'localhost',  # Or an IP Address that your DB is hosted on
         'PORT': '3306',
     }
