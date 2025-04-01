@@ -18,8 +18,15 @@ from django.contrib.auth import get_user_model, authenticate
 
 # Create your views here.
 
+class PublicPoolViewSet(ModelViewSet):
+    serializer_class = PoolsSerializer
+    permission_classes = [AllowAny]
 
-class PoolViewSet(ModelViewSet):
+    def get_queryset(self):
+        return Pool.objects.filter(active=True, status='public')
+
+
+class EduPoolViewSet(ModelViewSet):
     serializer_class = PoolsSerializer
     permission_classes = [AllowAny]
 
@@ -187,10 +194,10 @@ class MyCourseViewSet(ModelViewSet):
     serializer_class = MyCourseSerializer
     permission_classes = [IsAuthenticated]
 
-
     def get_queryset(self):
         now = timezone.now()
-        queryset = StartClass.objects.filter(student=self.request.user , course__start__lte=now, course__end__gte=now ).select_related("course")
+        queryset = StartClass.objects.filter(student=self.request.user, course__start__lte=now,
+                                             course__end__gte=now).select_related("course")
 
         if not queryset.exists():
             raise NotFound("دوره‌ای برای شما یافت نشد.")

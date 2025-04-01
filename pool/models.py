@@ -280,6 +280,7 @@ class Paid(models.Model):
         verbose_name="کاربر"
     )
     price = models.BigIntegerField(verbose_name='مبلغ', default=0)
+    ref_id = models.CharField(max_length=50, null=True, blank=True, verbose_name='شماره تراکنش')
     paid = models.BooleanField(default=False, verbose_name="پرداخت شده")
 
     def __str__(self):
@@ -316,4 +317,7 @@ class Coupon(models.Model):
         verbose_name = "کد تخفیف"
         verbose_name_plural = "کدهای تخفیف"
 
+
 # -----------------------------------------------------------------------------------------------------------------------
+
+

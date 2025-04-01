@@ -62,7 +62,7 @@ class ProfileCompleteSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'phone', 'code_meli', 'first_name', 'last_name', 'email', 'birthday', 'gender',
-                  'image' , 'status']
+                  'image', 'status']
         read_only_fields = ['username']
 
 
@@ -70,8 +70,6 @@ class TeacherListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
         fields = ['id', 'first_name', 'last_name', 'code_meli', 'phone', 'birthday', 'image', 'active', 'average_rate']
-
-
 
 
 class RateToTeacherSerializer(serializers.ModelSerializer):
@@ -99,7 +97,38 @@ class TeacherSignUpFormSerializer(serializers.ModelSerializer):
         model = TeacherSignUpForm
         fields = ['l_name', 'phone_number', 'massage']
 
+
 class GetUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id' , 'username' , 'first_name','last_name' , 'phone' , 'birthday' , 'status']
+        fields = ['id', 'username', 'first_name', 'last_name', 'phone', 'birthday', 'image', 'status']
+
+
+class CommentTeacherShowSerializer(serializers.ModelSerializer):
+    user = GetUserSerializer()
+    create = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CommentTeacher
+        fields = ['id', 'user', 'comment', 'create', 'reply', 'is_reply']
+        read_only_fields = ['create']
+
+    def validate(self, data):
+        """بررسی صحت مقدار `is_reply` و `reply`"""
+        if data.get('is_reply', False) and not data.get('reply'):
+            raise serializers.ValidationError("برای کامنت ریپلای، مقدار `reply` الزامی است.")
+        return data
+
+    def get_create(self, obj):
+        return obj.create.strftime("%Y-%m-%d %H:%M")
+
+
+class CommentTeacherCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommentTeacher
+        fields = ['comment', 'reply', 'is_reply']
+
+    def validate(self, data):
+        if data.get('is_reply', False) and not data.get('reply'):
+            raise serializers.ValidationError("برای کامنت ریپلای، مقدار `reply` الزامی است.")
+        return data

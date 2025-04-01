@@ -62,7 +62,7 @@ class CustomUser(AbstractUser):
     is_staff = models.BooleanField(default=False, verbose_name="مدیر سیستم")
     is_superuser = models.BooleanField(default=False, verbose_name="ابرکاربر")
     recovery_code = models.CharField(max_length=6, blank=True, null=True, verbose_name="کد بازیابی")
-    image = models.ImageField(upload_to='profile', null=True, blank=True, verbose_name="تصویر پروفایل")
+    image = models.ImageField(upload_to='profile', null=True, blank=True, verbose_name="تصویر پروفایل" , default='profile/default-avatar.jpg')
 
     objects = CustomUserManager()
 
@@ -157,7 +157,6 @@ class RateToTeacher(models.Model):
         verbose_name='امتیاز'
     )
 
-
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'teacher'], name='unique_rate_per_user_teacher')
@@ -172,3 +171,31 @@ def update_teacher_average(sender, instance, **kwargs):
     avg = RateToTeacher.objects.filter(teacher=teacher).aggregate(avg=Avg('rate'))['avg'] or 0.0
     teacher.average_rate = round(avg, 1)
     teacher.save()
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+class CommentTeacher(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='user_comment', verbose_name='نویسنده')
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='teacher_comment', verbose_name='مربی')
+    comment = models.TextField(verbose_name='کامنت')
+    create = jmodels.jDateTimeField(auto_now_add=True, verbose_name='ساخته شده')
+    reply = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='comment_reply',
+                              verbose_name='ریپلای')
+    is_reply = models.BooleanField(default=False, verbose_name='کامنت ریپلای')
+    comment_report = models.ManyToManyField(CustomUser, blank=True, related_name='com_report',
+                                            verbose_name='گزارش کامنت')
+    total_comment_report = models.PositiveIntegerField(default=0, verbose_name='تعداد گزارشات')
+
+    class Meta:
+        verbose_name = "کامنت مربی"
+        verbose_name_plural = "کامنت‌های مربیان"
+        ordering = ['-total_comment_report']
+
+    def __str__(self):
+        return f"{self.user} → {self.teacher}: {self.comment[:30]}"
+
+    def update_total_reports(self):
+        self.total_comment_report = self.comment_report.count()
+        self.save()
+

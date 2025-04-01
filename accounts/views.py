@@ -1,7 +1,7 @@
 import random
 from django.shortcuts import render
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView
@@ -155,7 +155,7 @@ class ForgotPasswordViewSet(ViewSet):
                 ghasedak_sms.SendSingleSmsInput(
                     message=f'کد بازیابی شما: {recovery_code}',
                     receptor=phone,
-                    line_number='30005088',  
+                    line_number='30005088',
                 )
             )
         except ghasedak_sms.error.ApiException as e:
@@ -212,4 +212,57 @@ class TeacherSignUpViewSet(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+class CommentTeacherViewSet(ModelViewSet):
+    serializer_class = CommentTeacherShowSerializer
+    permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return CommentTeacher.objects.filter(teacher_id=self.kwargs['teacher_pk'])
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'reply_comment']:
+            return CommentTeacherCreateSerializer
+        return CommentTeacherShowSerializer
+
+    def perform_create(self, serializer):
+        teacher_id = self.kwargs.get('teacher_pk')
+        teacher = Teacher.objects.get(id=teacher_id)
+        serializer.save(user=self.request.user, teacher=teacher)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if serializer.validated_data.get("is_reply", False) and not serializer.validated_data.get("reply"):
+            return Response({"error": "برای کامنت ریپلای، مقدار `reply` الزامی است."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_destroy(self, instance):
+        if instance.user != self.request.user:
+            raise PermissionDenied('شما اجازه حذف این کامنت را ندارید.')
+        instance.delete()
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def report_comment(self, request, pk=None):
+        comment = self.get_object()
+        user = request.user
+
+        if user in comment.comment_report.all():
+            return Response({'detail': 'شما قبلاً این کامنت را ریپورت کرده‌اید.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        comment.comment_report.add(user)
+        comment.update_total_reports()
+        return Response({'detail': 'کامنت با موفقیت ریپورت شد.'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reply_comment(self, request, pk=None):
+        parent_comment = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(user=request.user, reply=parent_comment, is_reply=True)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

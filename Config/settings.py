@@ -26,7 +26,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     "qahramananemrooz.com",
-    "www.qahramananemrooz.com"
+    "www.qahramananemrooz.com",
+    '127.0.0.1'
 ]
 
 
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'accounts.apps.AccountsConfig',
     'pool.apps.PoolConfig',
+    'ticket.apps.TicketConfig',
     "debug_toolbar",
 
 ]
@@ -160,9 +162,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'fa'
 TIME_ZONE = 'Asia/Tehran'
+USE_TZ = True
 USE_I18N = True
 USE_L10N = True
-USE_TZ = True
 
 
 GHASEDAK_API_KEY = '23fb127710c24f5119e4c5f5a01e25ccf3ffacbf8381e676dc7e58c17c2fe7d92u5fsiE5ui22YYif'
@@ -170,6 +172,7 @@ GHASEDAK_API_KEY = '23fb127710c24f5119e4c5f5a01e25ccf3ffacbf8381e676dc7e58c17c2f
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+# STATIC_ROOT = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]

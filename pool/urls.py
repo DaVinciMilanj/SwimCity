@@ -6,7 +6,8 @@ from django.conf.urls.static import static
 
 router = routers.DefaultRouter()
 
-router.register('pool', views.PoolViewSet, basename='pools')
+router.register('pool', views.EduPoolViewSet, basename='pools')
+router.register('public-pool' , views.PublicPoolViewSet , basename='public-pool')
 router.register('my-course' , views.MyCourseViewSet , basename='my-course')
 pool_routers = routers.NestedDefaultRouter(router, 'pool', lookup='pools')
 
