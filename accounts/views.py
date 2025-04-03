@@ -257,12 +257,20 @@ class CommentTeacherViewSet(ModelViewSet):
         return Response({'detail': 'کامنت با موفقیت ریپورت شد.'}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def reply_comment(self, request, pk=None):
+    def reply_comment(self, request, teacher_pk=None, pk=None):
         parent_comment = self.get_object()
+        teacher_id = self.kwargs.get('teacher_pk')
         serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save(user=request.user, reply=parent_comment, is_reply=True)
+            serializer.save(user=request.user, reply=parent_comment, teacher_id=teacher_id, is_reply=True)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def get_reply_comment(self, request, teacher_pk=None, pk=None):
+        parent_comment = self.get_object()
+        replies = parent_comment.comment_reply.all()
+        serializer = CommentTeacherShowSerializer(replies, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
