@@ -33,8 +33,8 @@ admin.site.register(CreateClass, CreateClassAdmin)
 
 
 class ClassesAdmin(admin.ModelAdmin):
-    list_display = ['course_start', 'teacher', 'start', 'end', 'start_clock', 'end_clock', 'total_price', 'active']
-    fields = ['course_start', 'teacher', 'start', 'end', 'start_clock', 'end_clock', 'price', 'discount', 'active']
+    list_display = ['course_start', 'teacher', 'start', 'end', 'start_clock', 'end_clock', 'total_price','title','active']
+    fields = ['course_start', 'teacher', 'start', 'end', 'start_clock', 'end_clock', 'price', 'discount','title','active']
     search_fields = ['course_start']
 
 
@@ -61,8 +61,9 @@ admin.site.register(StartClass, StartClassAdmin)
 
 
 class PaidClassAdmin(admin.ModelAdmin):
-    list_display = ['course', 'user', 'price']
-
+    list_display = ['course', 'user', 'price' , 'create']
+    search_fields = ['user' , 'price']
+    ordering = ['create']
     def price(self, obj):
         return obj.course.price
 

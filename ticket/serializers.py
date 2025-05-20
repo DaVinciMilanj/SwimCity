@@ -12,3 +12,18 @@ class PoolTicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = PoolTicket
         fields = ['id', 'pool', 'description', 'price', 'discount_amount', 'final_price']
+
+
+class TicketReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketReservation
+        fields = ['id','ticket' ,'full_name', 'phone_number', 'quantity']
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ['id', 'reservation', 'paid', 'ref_id', 'price', 'authority', 'paid']
+
+
+

@@ -31,7 +31,7 @@ class CoursesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Classes
-        fields = ['id', 'pool', 'code', 'teacher', 'start', 'end', 'start_clock', 'end_clock', 'price', 'discount',
+        fields = ['id', 'pool', 'code','title','teacher', 'start', 'end', 'start_clock', 'end_clock', 'price', 'discount',
                   'total_price', 'limit_register', 'register_count']
 
 
@@ -85,7 +85,7 @@ class ShowPrivateClassSerializer(serializers.ModelSerializer):
 class PaidSerializer(serializers.ModelSerializer):
     class Meta:
         model = Paid
-        fields = ['id', 'price', 'course', 'user']
+        fields = ['id', 'price', 'course', 'user', 'ref_id', 'authority' , 'paid']
 
 
 class MyCourseSerializer(serializers.ModelSerializer):
@@ -99,3 +99,9 @@ class MyCourseSerializer(serializers.ModelSerializer):
     def get_price(self, obj):
         paid_instance = Paid.objects.filter(course=obj.course, user=self.context['request'].user).first()
         return paid_instance.price if paid_instance else 0  # اگر پرداختی وجود نداشت، مقدار ۰ را برگرداند
+
+
+class PaidPrivateClassSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Paid
+        fields = ['id' ,'price','private_class','user', 'ref_id', 'authority' , 'paid' ]

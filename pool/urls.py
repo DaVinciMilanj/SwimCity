@@ -9,6 +9,7 @@ router = routers.DefaultRouter()
 router.register('pool', views.EduPoolViewSet, basename='pools')
 router.register('public-pool' , views.PublicPoolViewSet , basename='public-pool')
 router.register('my-course' , views.MyCourseViewSet , basename='my-course')
+# router.register('my-paid' , views.GetMyPaidViewSet ,basename='my-paid')
 pool_routers = routers.NestedDefaultRouter(router, 'pool', lookup='pools')
 
 pool_routers.register('course', views.CourseViewSet, basename='pools-course')
@@ -16,7 +17,11 @@ course_routers = routers.NestedDefaultRouter(pool_routers, 'course', lookup='cou
 
 router.register('private-class' , views.PrivateClassRequestViewSet , basename='private-class')
 router.register('create-private-class' , views.CreatePrivateClassViewSet , basename='create-private-class')
+
 course_routers.register('paid', views.PaidViewSet, basename='course-paid')
+
+
+router.register('paid-private-class' , views.PaidPrivateClass , basename='paid-private-class')
 
 
 urlpatterns = router.urls + pool_routers.urls + course_routers.urls

@@ -19,6 +19,9 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.sitemaps.views import sitemap
+from Config.sitemaps import sitemaps
+from Config.sitemaps import PoolSitemap, CourseSitemap
 
 # schema_view = get_schema_view(
 #    openapi.Info(
@@ -37,14 +40,12 @@ urlpatterns = [
     path('admin/admin/', admin.site.urls),
     # path('i18n/', include('django.conf.urls.i18n')),
     path('api/accounts/', include('accounts.urls', namespace='accounts')),
-    path('api/pools/' , include('pool.urls' , namespace='pools')),
-     path('api/ticket/' , include('ticket.urls' , namespace='ticket')),
+    path('api/pools/', include('pool.urls', namespace='pools')),
+    path('api/ticket/', include('ticket.urls', namespace='ticket')),
     path("__debug__/", include("debug_toolbar.urls")),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
 ]
 
-# urlpatterns += i18n_patterns(
-#     path('admin/', admin.site.urls),
-# )
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -27,7 +27,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "qahramananemrooz.com",
     "www.qahramananemrooz.com",
-    '127.0.0.1'
+    '127.0.0.1','localhost'
+
 ]
 
 
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
     'pool.apps.PoolConfig',
     'ticket.apps.TicketConfig',
     "debug_toolbar",
+    'django.contrib.sitemaps',
 
 ]
 REST_FRAMEWORK = {

@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
+from django.urls import reverse
 from rest_framework.exceptions import ValidationError
 from django_jalali.db import models as jmodels
 from accounts.models import CustomUser
@@ -40,6 +41,8 @@ class Pool(models.Model):
     active = models.BooleanField(default=True, verbose_name="فعال")
     address = models.TextField(verbose_name="آدرس")
     status = models.CharField(choices=STATUS, max_length=20, blank=True, null=True, verbose_name="وضعیت استخر")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "استخر"
@@ -47,6 +50,9 @@ class Pool(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.get_gender_display()}"
+
+    def get_absolute_url(self):
+        return reverse('pools:pools-detail', kwargs={'pk': self.pk})
 
 
 class CreateClass(models.Model):
@@ -113,6 +119,7 @@ class Classes(models.Model):
     end = jmodels.jDateField(null=True, blank=True, verbose_name="تاریخ پایان")
     start_clock = models.TimeField(verbose_name="ساعت شروع")
     end_clock = models.TimeField(verbose_name="ساعت پایان")
+    title = models.CharField(default='روز های زوج', max_length=250)
     active = models.BooleanField(default=False, verbose_name="فعال")
     price = models.PositiveBigIntegerField(verbose_name="قیمت")
     discount = models.PositiveIntegerField(blank=True, null=True, verbose_name="درصد تخفیف")
@@ -131,6 +138,11 @@ class Classes(models.Model):
 
     def __str__(self):
         return str(self.course_start)
+
+    def get_absolute_url(self):
+        return reverse('pools:pools-course-list', kwargs={
+            'pools_pk': self.course_start.pool.pk,
+        })
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -260,8 +272,9 @@ class PrivateClass(models.Model):
     paid = models.BooleanField(default=False, verbose_name="پرداخت شده")
 
     def __str__(self):
-        return f"کلاس خصوصی - {self.teacher.last_name} ({datetime2jalali(self.start_date).strftime('%Y/%m/%d')})"
-
+        teacher_name = self.teacher.last_name if self.teacher else "نامشخص"
+        date_str = (self.start_date).strftime('%Y/%m/%d') if self.start_date else "تاریخ‌نامشخص"
+        return f"کلاس خصوصی - {teacher_name} ({date_str})"
     class Meta:
         verbose_name = "کلاس خصوصی"
         verbose_name_plural = "کلاس‌های خصوصی"
@@ -274,14 +287,23 @@ class Paid(models.Model):
         blank=True, null=True,
         verbose_name="دوره"
     )
+    private_class = models.ForeignKey(
+        PrivateClass, on_delete=models.PROTECT,
+        related_name='paid_private_class',
+        blank=True, null=True,
+        verbose_name="کلاس خصوصی"
+    )
     user = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE,
         related_name='user_paid',
         verbose_name="کاربر"
     )
+
     price = models.BigIntegerField(verbose_name='مبلغ', default=0)
     ref_id = models.CharField(max_length=50, null=True, blank=True, verbose_name='شماره تراکنش')
+    authority = models.CharField(max_length=255, null=True, blank=True, verbose_name='کد پیگیری زرین‌پال')
     paid = models.BooleanField(default=False, verbose_name="پرداخت شده")
+    create = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ پرداخت')
 
     def __str__(self):
         return f"پرداخت {self.user.last_name}"
@@ -289,7 +311,13 @@ class Paid(models.Model):
     def save(self, *args, **kwargs):
         if self.course and not self.price:
             self.price = self.course.total_price
+
         super().save(*args, **kwargs)
+
+
+        if self.paid and self.private_class:
+            self.private_class.paid = True
+            self.private_class.save()
 
     class Meta:
         verbose_name = "پرداخت"
@@ -317,7 +345,4 @@ class Coupon(models.Model):
         verbose_name = "کد تخفیف"
         verbose_name_plural = "کدهای تخفیف"
 
-
 # -----------------------------------------------------------------------------------------------------------------------
-
-
