@@ -1,4 +1,5 @@
 import jdatetime
+import requests
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from rest_framework.decorators import action
@@ -85,26 +86,79 @@ class PaidViewSet(ModelViewSet):
     def create(self, request, *args, **kwargs):
         course_pk = self.kwargs.get('course_pk')
         course = get_object_or_404(Classes, pk=course_pk)
+        price = request.data.get('price') or course.total_price
+        price = int(price)
 
-        # بررسی وجود پرداخت قبلی
-        paid_instance, created = Paid.objects.get_or_create(
-            course=course, user=request.user,
-            defaults={'price': course.total_price, 'paid': True}
+        # ایجاد فیش جدید
+        paid_instance = Paid.objects.create(
+            course=course,
+            user=request.user,
+            price=price,
+            paid=False
         )
 
-        # اگر از قبل وجود داشت، همان را برگردان
-        if not created:
-            serializer = self.get_serializer(paid_instance)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        callback_url = f"http://localhost:4200/payment-result"
+        data = {
+            "merchant_id": "0ad38487-200a-4563-9edf-66241e005555",
+            "amount": price,
+            "callback_url": callback_url,
+            "description": f"پرداخت برای دوره {course.course_start.course_code}",
+        }
 
-        # اگر کاربر مبلغ فرستاده باشد، آن را به‌روز کند
-        if 'price' in request.data:
-            paid_instance.price = request.data['price']
+        headers = {'content-type': 'application/json'}
+        response = requests.post("https://api.zarinpal.com/pg/v4/payment/request.json", json=data, headers=headers)
+
+        res_data = response.json().get("data", {})
+
+        if response.status_code == 200 and res_data.get("code") == 100:
+            # ذخیره authority
+            paid_instance.authority = res_data['authority']
             paid_instance.save()
 
-        serializer = self.get_serializer(paid_instance)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({
+                "url": f"https://www.zarinpal.com/pg/StartPay/{res_data['authority']}"
+            })
+        else:
+            return Response({"error": "خطا در اتصال به زرین‌پال"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=False, methods=['get'], url_path='verify')
+    def verify(self, request, pools_pk=None, course_pk=None):
+        authority = request.query_params.get('Authority')
+        status_param = request.query_params.get('Status')
+
+        if status_param != 'OK':
+            return Response({'status': 'failed', 'message': 'پرداخت توسط کاربر لغو شد'}, status=400)
+        print("Received authority:", authority)
+        # فیش را بر اساس authority پیدا کن
+        paid_instance = get_object_or_404(Paid, authority=authority)
+
+        data = {
+            "merchant_id": "0ad38487-200a-4563-9edf-66241e005555",
+            "amount": paid_instance.price,
+            "authority": authority
+        }
+
+        response = requests.post("https://api.zarinpal.com/pg/v4/payment/verify.json", json=data)
+        res_data = response.json().get("data", {})
+
+        if response.status_code == 200 and res_data.get("code") in [100, 101]:
+            print("Verify called with authority:", authority)
+            paid_instance.paid = True
+            paid_instance.ref_id = res_data.get("ref_id")
+            paid_instance.save()
+            return Response({'status': 'success', 'ref_id': res_data.get("ref_id")})
+        else:
+            return Response({'status': 'failed', 'message': 'تأیید پرداخت ناموفق بود'}, status=400)
+
+
+# class GetMyPaidViewSet(ModelViewSet):
+#     permission_classes = [IsAuthenticated]
+#     serializer_class = PaidSerializer
+#
+#     def get_queryset(self):
+#         authority = self.request.query_params.get('authority')
+#         return Paid.objects.filter(user=self.request.user, authority=authority, paid=True)
+#
 
 class PrivateClassRequestViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -203,3 +257,76 @@ class MyCourseViewSet(ModelViewSet):
             raise NotFound("دوره‌ای برای شما یافت نشد.")
 
         return queryset
+
+
+# ----------------------------------------------------------------------------------
+
+class PaidPrivateClass(ModelViewSet):
+    serializer_class = PaidPrivateClassSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Paid.objects.filter(private_class__pk=self.request.data.get('private_class_pk'), user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        private_class_pk = self.request.data.get('private_class_pk')
+        private_class = get_object_or_404(PrivateClass, pk=private_class_pk)
+        price = request.data.get('price') or private_class.total_price
+        price = int(price)
+
+        # ایجاد فیش جدید
+        paid_instance = Paid.objects.create(
+            private_class=private_class,
+            user=request.user,
+            price=price,
+            paid=False
+        )
+
+        callback_url = "http://localhost:4200/private-payment"
+        data = {
+            "merchant_id": "0ad38487-200a-4563-9edf-66241e005555",
+            "amount": price,
+            "callback_url": callback_url,
+            "description": f"پرداخت کلاس خصوصی {private_class}",
+        }
+
+        headers = {'content-type': 'application/json'}
+        response = requests.post("https://api.zarinpal.com/pg/v4/payment/request.json", json=data, headers=headers)
+        res_data = response.json().get("data", {})
+
+        if response.status_code == 200 and res_data.get("code") == 100:
+            paid_instance.authority = res_data['authority']
+            paid_instance.save()
+
+            return Response({
+                "url": f"https://www.zarinpal.com/pg/StartPay/{res_data['authority']}"
+            })
+        else:
+            return Response({"error": "خطا در اتصال به زرین‌پال"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'], url_path='verify')
+    def verify(self, request, pools_pk=None, private_class_pk=None):
+        authority = request.query_params.get('Authority')
+        status_param = request.query_params.get('Status')
+
+        if status_param != 'OK':
+            return Response({'status': 'failed', 'message': 'پرداخت توسط کاربر لغو شد'}, status=400)
+
+        paid_instance = get_object_or_404(Paid, authority=authority)
+
+        data = {
+            "merchant_id": "0ad38487-200a-4563-9edf-66241e005555",
+            "amount": paid_instance.price,
+            "authority": authority
+        }
+
+        response = requests.post("https://api.zarinpal.com/pg/v4/payment/verify.json", json=data)
+        res_data = response.json().get("data", {})
+
+        if response.status_code == 200 and res_data.get("code") in [100, 101]:
+            paid_instance.paid = True
+            paid_instance.ref_id = res_data.get("ref_id")
+            paid_instance.save()
+            return Response({'status': 'success', 'ref_id': res_data.get("ref_id")})
+        else:
+            return Response({'status': 'failed', 'message': 'تأیید پرداخت ناموفق بود'}, status=400)
