@@ -9,6 +9,7 @@ from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 
+
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
     add_form = CustomUserCreationForm
@@ -17,23 +18,26 @@ class CustomUserAdmin(UserAdmin):
     list_display = ['username', 'first_name', 'last_name', 'phone', 'is_superuser']
     search_fields = ['username', 'first_name', 'last_name', 'phone']
 
-    fieldsets = UserAdmin.fieldsets + (
-        ('اطلاعات اضافی', {
-            'fields': (
-                'code_meli', 'phone', 'birthday', 'status', 'gender', 'recovery_code', 'image'
-            )
-        }),
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('اطلاعات شخصی', {'fields': ('first_name', 'last_name', 'email')}),
+        ('اطلاعات اضافی', {'fields': ('code_meli', 'phone', 'birthday', 'status', 'gender', 'recovery_code', 'image')}),
+        ('دسترسی‌ها', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('تاریخچه', {'fields': ('last_login', 'date_joined')}),
     )
 
-    add_fieldsets = UserAdmin.add_fieldsets + (
-        ('اطلاعات اضافی', {
-            'fields': (
-                'code_meli', 'phone', 'birthday', 'status', 'gender', 'recovery_code', 'image'
-            )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'password1', 'password2'),
         }),
+        ('اطلاعات اضافی', {'fields': ('code_meli', 'phone', 'birthday', 'status', 'gender', 'recovery_code', 'image')}),
+        ('دسترسی‌ها', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
     )
+
 
 admin.site.register(CustomUser, CustomUserAdmin)
+
 
 class TeacherAdminShow(admin.ModelAdmin):
     list_display = ['first_name', 'last_name', 'phone']
