@@ -9,9 +9,26 @@ from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 
-class CustomUserAdmin(admin.ModelAdmin):
-    list_display = ['last_name', 'phone', 'username']
-    search_fields = ['username', 'first_name', 'last_name', 'phone']  # این خط ضروری است
+class CustomUserAdmin(UserAdmin):
+    model = CustomUser
+    list_display = ['username', 'first_name', 'last_name', 'phone']
+    search_fields = ['username', 'first_name', 'last_name', 'phone']
+
+    fieldsets = UserAdmin.fieldsets + (
+        (None, {
+            'fields': (
+                'code_meli', 'phone', 'birthday', 'status', 'gender', 'recovery_code', 'image'
+            )
+        }),
+    )
+
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        (None, {
+            'fields': (
+                'code_meli', 'phone', 'birthday', 'status', 'gender', 'recovery_code', 'image'
+            )
+        }),
+    )
 
 
 admin.site.register(CustomUser, CustomUserAdmin)
