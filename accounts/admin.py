@@ -11,11 +11,14 @@ from django.contrib.auth.admin import UserAdmin
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display = ['username', 'first_name', 'last_name', 'phone']
+    add_form = CustomUserCreationForm
+    form = CustomUserChangeForm
+
+    list_display = ['username', 'first_name', 'last_name', 'phone', 'is_superuser']
     search_fields = ['username', 'first_name', 'last_name', 'phone']
 
     fieldsets = UserAdmin.fieldsets + (
-        (None, {
+        ('اطلاعات اضافی', {
             'fields': (
                 'code_meli', 'phone', 'birthday', 'status', 'gender', 'recovery_code', 'image'
             )
@@ -23,16 +26,14 @@ class CustomUserAdmin(UserAdmin):
     )
 
     add_fieldsets = UserAdmin.add_fieldsets + (
-        (None, {
+        ('اطلاعات اضافی', {
             'fields': (
                 'code_meli', 'phone', 'birthday', 'status', 'gender', 'recovery_code', 'image'
             )
         }),
     )
 
-
 admin.site.register(CustomUser, CustomUserAdmin)
-
 
 class TeacherAdminShow(admin.ModelAdmin):
     list_display = ['first_name', 'last_name', 'phone']
