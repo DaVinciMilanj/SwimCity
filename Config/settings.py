@@ -32,6 +32,7 @@ ALLOWED_HOSTS = [
 ]
 
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -195,5 +196,5 @@ LOCALE_PATHS = [
 ]
 
 
-
+SITE_DOMAIN = "https://qahramananemrooz.com"
 

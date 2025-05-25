@@ -43,7 +43,7 @@ urlpatterns = [
     path('api/pools/', include('pool.urls', namespace='pools')),
     path('api/ticket/', include('ticket.urls', namespace='ticket')),
     path("__debug__/", include("debug_toolbar.urls")),
-    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps, "domain": settings.SITE_DOMAIN}, name="sitemap")
 ]
 
 
