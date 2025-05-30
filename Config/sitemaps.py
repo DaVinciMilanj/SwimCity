@@ -4,17 +4,14 @@ from pool.models import Pool, Classes
 
 class PoolSitemap(Sitemap):
     changefreq = "daily"
-    priority = 0.8
-    protocol = "https"  # اگر SSL نداری، 'http' بگذار
+    priority = 0.9
+    protocol = "https"
 
     def items(self):
-        return Pool.objects.all()
+        return Pool.objects.filter(status='public')
 
     def location(self, obj):
-        return f"/api/pools/pool/{obj.id}/"
-
-    def lastmod(self, obj):
-        return obj.updated_at  # اگر ندارید، این متد رو حذف کنید
+        return f"/public-pools/{obj.id}/tickets"
 
 
 class CourseSitemap(Sitemap):
@@ -26,7 +23,7 @@ class CourseSitemap(Sitemap):
         return Classes.objects.all()
 
     def location(self, obj):
-        return f"/api/pools/pool/{obj.pool.id}/course/"
+        return f"/pools/{obj.course_start.pool.id}/course/"
 
 
 sitemaps = {

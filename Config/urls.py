@@ -21,7 +21,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.sitemaps.views import sitemap
 from Config.sitemaps import sitemaps
-from Config.sitemaps import PoolSitemap, CourseSitemap
+from django.http import HttpResponse
+
 
 # schema_view = get_schema_view(
 #    openapi.Info(
@@ -36,6 +37,16 @@ from Config.sitemaps import PoolSitemap, CourseSitemap
 #    permission_classes=(permissions.AllowAny,),  # همه کاربران به API دسترسی دارند
 # )
 
+def robots_txt(request):
+    return HttpResponse(
+        "User-agent: *\n"
+        "Disallow: /admin/\n"
+        "Disallow: /api/\n"
+        "Sitemap: https://qahramananemrooz.com/sitemap.xml",
+        content_type="text/plain"
+    )
+
+
 urlpatterns = [
     path('admin/admin/', admin.site.urls),
     # path('i18n/', include('django.conf.urls.i18n')),
@@ -43,9 +54,9 @@ urlpatterns = [
     path('api/pools/', include('pool.urls', namespace='pools')),
     path('api/ticket/', include('ticket.urls', namespace='ticket')),
     path("__debug__/", include("debug_toolbar.urls")),
-    path("sitemap.xml", sitemap, {"sitemaps": sitemaps, "domain": settings.SITE_DOMAIN}, name="sitemap")
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
+    path("robots.txt", robots_txt),
 ]
-
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
