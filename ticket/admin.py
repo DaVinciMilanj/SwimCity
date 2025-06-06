@@ -27,30 +27,42 @@ class PoolTicketAdmin(admin.ModelAdmin):
 @admin.register(TicketReservation)
 class TicketReservationAdmin(admin.ModelAdmin):
     list_display = (
-        'full_name', 'phone_number', 'ticket', 'code', 'payment_status', 'created_at_formatted', 'entrance_time', 'exit_time')
+        'full_name', 'phone_number', 'ticket', 'code',
+        'payment_status', 'created_at_formatted',
+        'entrance_time_formatted', 'exit_time_formatted',
+        'extra_cost_display'
+    )
     list_filter = ('ticket',)
-    search_fields = ('full_name', 'phone_number', 'code')
-    readonly_fields = ('code', 'created_at')
+    search_fields = ('full_name', 'phone_number', 'code', 'closet_code')
+    readonly_fields = ('code', 'quantity','created_at_formatted','extra_cost_display' )
+
+    def entrance_time_formatted(self, obj):
+        if obj.entrance_time:
+            return obj.entrance_time.strftime('%H:%M')
+        return "—"
+    entrance_time_formatted.short_description = 'ساعت ورود'
+
+    def exit_time_formatted(self, obj):
+        if obj.exit_time:
+            return obj.exit_time.strftime('%H:%M')
+        return "—"
+    exit_time_formatted.short_description = 'ساعت خروج'
+
+    def created_at_formatted(self, obj):
+        return obj.created_at.strftime('%Y-%m-%d  /  %H:%M:%S')
+    created_at_formatted.admin_order_field = 'created_at'
+    created_at_formatted.short_description = 'زمان ایجاد'
+
+    def extra_cost_display(self, obj):
+        return f"{obj.extra_cost:,} تومان" if obj.entrance_time and obj.exit_time else "—"
+    extra_cost_display.short_description = 'مبلغ اضافه‌تر بابت زمان بیشتر'
 
     def payment_status(self, obj):
         payment = Payment.objects.filter(reservation=obj).first()
         if payment:
             return "پرداخت شده ✅" if payment.paid else "پرداخت نشده ❌"
         return "پرداخت نشده ❌"
-
     payment_status.short_description = 'وضعیت پرداخت'
-
-    def created_at_formatted(self, obj):
-        return obj.created_at.strftime('%Y-%m-%d  /  %H:%M:%S')
-
-    created_at_formatted.admin_order_field = 'created_at'
-    created_at_formatted.short_description = 'زمان ایجاد'
-
-    def modified_at_formatted(self, obj):
-        return obj.modified_at.strftime('%Y-%m-%d  /  %H:%M:%S')
-
-    modified_at_formatted.admin_order_field = 'modified_at'
-    modified_at_formatted.short_description = 'آخرین تغییر'
 
 
 class PaymentAdmin(admin.ModelAdmin):

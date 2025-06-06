@@ -2,6 +2,7 @@ import random
 from django.db import models
 from django_jalali.db import models as jmodels
 from pool.models import Pool
+from datetime import timedelta
 
 
 # Create your models here.
@@ -20,6 +21,7 @@ class PoolTicket(models.Model):
     price = models.PositiveBigIntegerField(verbose_name='قیمت')
     discount_amount = models.PositiveBigIntegerField(default=0, verbose_name='مبلغ تخفیف ')
     description = models.CharField(max_length=250, verbose_name='توضیحات')
+    per_minute = models.PositiveIntegerField(default=100, verbose_name='در عوض هر دقیقه بیشتر')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='ساخته شده')
     modified_at = models.DateTimeField(auto_now=True, verbose_name='تغییر داده شده')
 
@@ -40,8 +42,9 @@ class TicketReservation(models.Model):
                                related_name='reserve_tickets')
     full_name = models.CharField(max_length=250, verbose_name='نام و نام خانوادگی')
     phone_number = models.CharField(max_length=15, verbose_name='شماره تلفن')
-    quantity = models.PositiveSmallIntegerField(default=1  , verbose_name='تعداد')
+    quantity = models.PositiveSmallIntegerField(default=1, verbose_name='تعداد')
     code = models.CharField(max_length=6, unique=True, null=True, blank=True, editable=False, verbose_name='کد ورود')
+    closet_code = models.PositiveSmallIntegerField(default=0 , verbose_name='شماره کمد')
     entrance_time = jmodels.jDateTimeField(null=True, blank=True, verbose_name='ساعت ورود')
     exit_time = jmodels.jDateTimeField(null=True, blank=True, verbose_name='ساعت خروج')
     created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ خرید')
@@ -50,13 +53,17 @@ class TicketReservation(models.Model):
         verbose_name = "بلیط کاربر"
         verbose_name_plural = "بلیط کاربران"
 
-    # def save(self, *args, **kwargs):
-    #     if not self.code:
-    #         self.code = f"{random.randint(0, 999999):06}"
-    #     super().save(*args, **kwargs)
-
     def __str__(self):
         return f"{self.full_name} - {self.ticket}"
+
+    @property
+    def extra_cost(self):
+        if self.entrance_time and self.exit_time:
+            duration = self.exit_time - self.entrance_time
+            duration_minutes = duration.total_seconds() / 60
+            extra_minutes = max(duration_minutes - 90, 0)
+            return int(extra_minutes) * self.ticket.per_minute
+        return 0
 
 
 class Payment(models.Model):
@@ -65,8 +72,8 @@ class Payment(models.Model):
     paid = models.BooleanField(default=False, verbose_name='پرداخت شده')
     ref_id = models.CharField(max_length=50, null=True, blank=True, verbose_name='شماره تراکنش')
     authority = models.CharField(max_length=255, null=True, blank=True, verbose_name='کد پیگیری زرین‌پال')
-    price = models.PositiveBigIntegerField(default=0 , verbose_name='مبلغ')
-    sms_sent = models.BooleanField(default=False ,verbose_name='ارسال sms')
+    price = models.PositiveBigIntegerField(default=0, verbose_name='مبلغ')
+    sms_sent = models.BooleanField(default=False, verbose_name='ارسال sms')
     created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ پرداخت')
 
     class Meta:
